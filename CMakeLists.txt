@@ -4,8 +4,6 @@ project(dr_ensenso)
 find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	dr_base
-	dr_util
-	dr_camera
 	pcl_ros
 	pcl_conversions
 	cmake_modules
@@ -23,7 +21,7 @@ SET(SYSTEM_INCLUDE_DIRS ${Ensenso_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${Eigen_IN
 catkin_package(
 	INCLUDE_DIRS include ${SYSTEM_INCLUDE_DIRS}
 	LIBRARIES ${PROJECT_NAME} ${SYSTEM_LIBRARIES}
-	CATKIN_DEPENDS dr_camera
+	CATKIN_DEPENDS
 )
 
 dr_include_directories(
@@ -33,7 +31,6 @@ dr_include_directories(
 )
 
 add_library(${PROJECT_NAME}
-	src/dump.cpp
 	src/eigen.cpp
 	src/ensenso.cpp
 	src/error.cpp
@@ -43,14 +40,8 @@ add_library(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${SYSTEM_LIBRARIES})
 
-add_executable(ensenso_viewer src/ensenso_viewer.cpp)
-target_link_libraries(ensenso_viewer ${PROJECT_NAME} ${catkin_LIBRARIES} ${SYSTEM_LIBRARIES})
-
-add_executable(${PROJECT_NAME}_dump_tool src/dump_tool.cpp)
-target_link_libraries(${PROJECT_NAME}_dump_tool ${PROJECT_NAME} ${catkin_LIBRARIES} ${SYSTEM_LIBRARIES})
-
 install(
-	TARGETS "${PROJECT_NAME}" "${PROJECT_NAME}_dump_tool" "ensenso_viewer"
+	TARGETS "${PROJECT_NAME}"
 	ARCHIVE DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"
 	LIBRARY DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"
 	RUNTIME DESTINATION "${CATKIN_PACKAGE_BIN_DESTINATION}"
