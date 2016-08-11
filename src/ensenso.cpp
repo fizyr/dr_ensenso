@@ -76,10 +76,10 @@ bool Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, bool ove
 	return true;
 }
 
-bool Ensenso::calibrate(int const num_patterns, Eigen::Isometry3d & pose) {
+bool Ensenso::getPatternPose(Eigen::Isometry3d & pose, int const samples)  {
 	discardPatterns();
 
-	for (int i = 0; i < num_patterns; ++i) {
+	for (int i = 0; i < samples; ++i) {
 		recordCalibrationPattern();
 	}
 
