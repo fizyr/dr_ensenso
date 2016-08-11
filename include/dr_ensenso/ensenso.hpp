@@ -175,7 +175,7 @@ public:
 	}
 
 	/// Sets the Workspace calibration link.
-	void setWorkspace(Eigen::Isometry3d const & workspace);
+	void setWorkspace(Eigen::Isometry3d const & workspace, std::string const & frame_id = "Workspace");
 
 	/// Stores the caliration on the EEPROM of the camera.
 	void storeCalibration();
