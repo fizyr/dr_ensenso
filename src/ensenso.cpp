@@ -328,7 +328,7 @@ void Ensenso::clearWorkspace() {
 	setNx(ensenso_camera[itmLink][itmTarget], "");
 }
 
-void Ensenso::setWorkspace(Eigen::Isometry3d const & workspace, Eigen::Isometry3d const & defined_pose, std::string const & frame_id) {
+void Ensenso::setWorkspace(Eigen::Isometry3d const & workspace, std::string const & frame_id, Eigen::Isometry3d const & defined_pose) {
 	// calling CalibrateWorkspace with no PatternPose and DefinedPose clears the workspace.
 	NxLibCommand command(cmdCalibrateWorkspace);
 	setNx(command.parameters()[itmCameras][0], serialNumber());
