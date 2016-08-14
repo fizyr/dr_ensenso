@@ -120,7 +120,7 @@ public:
 	 * \param roi The region of interest.
 	 * \param capture If true, capture a new image before loading the point cloud.
 	 */
-	pcl::PointCloud<pcl::PointXYZ> getPointCloud(cv::Rect roi, bool capture) {
+	pcl::PointCloud<pcl::PointXYZ> getPointCloud(cv::Rect roi = cv::Rect(), bool capture = true) {
 		pcl::PointCloud<pcl::PointXYZ> result;
 		loadPointCloud(result, roi, capture);
 		return result;
