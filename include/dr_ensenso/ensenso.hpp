@@ -98,6 +98,16 @@ public:
 		loadIntensity(intensity, true);
 	}
 
+	/// Get the intensity image.
+	/**
+	 * \return The intensity image.
+	 */
+	cv::Mat getIntensity() {
+		cv::Mat intensity;
+		loadIntensity(intensity);
+		return intensity;
+	}
+
 	/// Loads the pointcloud from depth in the region of interest.
 	/**
 	 * \param cloud the resulting pointcloud.
