@@ -338,7 +338,10 @@ void Ensenso::setWorkspace(Eigen::Isometry3d const & workspace, std::string cons
 	workspace_mm.translation() *= 1000;
 	setNx(command.parameters()[itmPatternPose], workspace_mm);
 
-	setNx(command.parameters()[itmTarget], frame_id);
+	if (frame_id != "") {
+		setNx(command.parameters()[itmTarget], frame_id);
+	}
+
 	Eigen::Isometry3d defined_pose_mm = defined_pose;
 	defined_pose_mm.translation() *= 1000;
 	setNx(command.parameters()[itmDefinedPose], defined_pose_mm);
