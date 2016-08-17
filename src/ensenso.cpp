@@ -76,6 +76,12 @@ bool Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, bool ove
 	return true;
 }
 
+void Ensenso::rectifyImages() {
+	NxLibCommand command(cmdRectifyImages);
+	setNx(command.parameters()[itmCameras][0], serialNumber());
+	executeNx(command);
+}
+
 bool Ensenso::calibrate(int const num_patterns, Eigen::Isometry3d & pose) {
 	discardPatterns();
 

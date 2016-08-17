@@ -83,6 +83,9 @@ public:
 	 */
 	bool retrieve(bool trigger = true, unsigned int timeout = 1500, bool stereo = true, bool overlay=true) const;
 
+	/// Rectifies the images.
+	void rectifyImages();
+
 	/// Returns the pose of the calibration plate with respect to the camera.
 	bool calibrate(int const num_patterns, Eigen::Isometry3d & pose);
 
