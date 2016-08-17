@@ -65,6 +65,10 @@ bool Ensenso::trigger(bool stereo, bool overlay) const {
 bool Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, bool overlay) const {
 	overlay = overlay && overlay_camera;
 
+	// nothing to do?
+	if (!stereo && !overlay)
+		return true;
+
 	NxLibCommand command(trigger ? cmdCapture : cmdRetrieve);
 	setNx(command.parameters()[itmTimeout], int(timeout));
 	if (stereo) setNx(command.parameters()[itmCameras][0], serialNumber());
