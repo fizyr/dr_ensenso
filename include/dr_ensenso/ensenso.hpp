@@ -198,10 +198,10 @@ public:
 	void storeCalibration();
 
 	/// Sets the front light on or off.
-	void setFrontLight(bool state) const;
+	void setFrontLight(bool state);
 
 	/// Sets the projector on or off.
-	void setProjector(bool state) const;
+	void setProjector(bool state);
 
 protected:
 	/// Set the region of interest for the disparity map (and thereby depth / point cloud).
