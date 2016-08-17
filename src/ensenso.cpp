@@ -216,13 +216,13 @@ void Ensenso::recordCalibrationPattern() {
 	if (flex_view > 0) setFlexView(0);
 
 	// Capture image with front-light.
-	setNx(ensenso_camera[itmParameters][itmCapture][itmProjector], false);
-	setNx(ensenso_camera[itmParameters][itmCapture][itmFrontLight], true);
+	setProjector(false);
+	setFrontLight(true);
 
 	retrieve(true, 1500, true, false);
 
-	setNx(ensenso_camera[itmParameters][itmCapture][itmFrontLight], false);
-	setNx(ensenso_camera[itmParameters][itmCapture][itmProjector], true);
+	setFrontLight(false);
+	setProjector(true);
 
 	// Find the pattern.
 	NxLibCommand command_collect_pattern(cmdCollectPattern);
@@ -345,6 +345,14 @@ void Ensenso::storeCalibration() {
 	NxLibCommand command(cmdStoreCalibration);
 	setNx(command.parameters()[itmCameras][0], serialNumber());
 	executeNx(command);
+}
+
+void Ensenso::setFrontLight(bool state) const {
+	setNx(ensenso_camera[itmParameters][itmCapture][itmFrontLight], state);
+}
+
+void Ensenso::setProjector(bool state) const {
+	setNx(ensenso_camera[itmParameters][itmCapture][itmProjector], state);
 }
 
 }

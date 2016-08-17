@@ -194,6 +194,12 @@ public:
 	/// Stores the caliration on the EEPROM of the camera.
 	void storeCalibration();
 
+	/// Sets the front light on or off.
+	void setFrontLight(bool state) const;
+
+	/// Sets the projector on or off.
+	void setProjector(bool state) const;
+
 protected:
 	/// Set the region of interest for the disparity map (and thereby depth / point cloud).
 	void setRegionOfInterest(cv::Rect const & roi);
