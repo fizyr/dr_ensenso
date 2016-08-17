@@ -87,7 +87,7 @@ public:
 	void rectifyImages();
 
 	/// Returns the pose of the calibration plate with respect to the camera.
-	bool calibrate(int const num_patterns, Eigen::Isometry3d & pose);
+	bool getPatternPose(Eigen::Isometry3d & pose, int const samples);
 
 	/// Returns the size of the intensity images.
 	cv::Size getIntensitySize();
@@ -192,7 +192,7 @@ public:
 	}
 
 	/// Sets the Workspace calibration link.
-	void setWorkspace(Eigen::Isometry3d const & workspace);
+	void setWorkspace(Eigen::Isometry3d const & workspace, std::string const & frame_id = "Workspace", Eigen::Isometry3d const & defined_pose = Eigen::Isometry3d::Identity());
 
 	/// Stores the caliration on the EEPROM of the camera.
 	void storeCalibration();
