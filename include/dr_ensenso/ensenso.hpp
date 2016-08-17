@@ -177,7 +177,7 @@ public:
 	void clearWorkspace();
 
 	/// Returns the current FlexView value. If disabled, returns -1.
-	int flexView() {
+	int flexView() const {
 		try {
 			// in case FlexView = false, getting the int value gives an error
 			return getNx<int>(ensenso_camera[itmParameters][itmCapture][itmFlexView]);
