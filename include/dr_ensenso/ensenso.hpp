@@ -44,6 +44,11 @@ public:
 		return overlay_camera;
 	}
 
+	/// Returns whether the Ensenso has an overlay camera.
+	bool hasOverlay() const {
+		return nativeOverlay() != boost::none;
+	}
+
 	/// Get the serial number of the stereo camera.
 	std::string serialNumber() const {
 		return getNx<std::string>(ensenso_camera[itmSerialNumber]);
