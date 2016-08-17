@@ -143,7 +143,8 @@ void Ensenso::loadIntensity(cv::Mat & intensity, bool capture) {
 	if (overlay_camera) {
 		intensity = toCvMat(overlay_camera.get()[itmImages][itmRaw]);
 	} else {
-		intensity = toCvMat(ensenso_camera[itmImages][itmRaw][itmLeft]);
+		rectifyImages();
+		intensity = toCvMat(ensenso_camera[itmImages][itmRectified][itmLeft]);
 	}
 }
 
@@ -338,7 +339,6 @@ void Ensenso::clearWorkspace() {
 	setNx(ensenso_camera[itmLink][itmTarget], "");
 }
 
-
 void Ensenso::setWorkspace(Eigen::Isometry3d const & workspace) {
 	// calling CalibrateWorkspace with no PatternPose and DefinedPose clears the workspace.
 	NxLibCommand command(cmdCalibrateWorkspace);
@@ -357,11 +357,11 @@ void Ensenso::storeCalibration() {
 	executeNx(command);
 }
 
-void Ensenso::setFrontLight(bool state) const {
+void Ensenso::setFrontLight(bool state) {
 	setNx(ensenso_camera[itmParameters][itmCapture][itmFrontLight], state);
 }
 
-void Ensenso::setProjector(bool state) const {
+void Ensenso::setProjector(bool state) {
 	setNx(ensenso_camera[itmParameters][itmCapture][itmProjector], state);
 }
 
