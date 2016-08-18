@@ -46,7 +46,7 @@ public:
 
 	/// Returns whether the Ensenso has an overlay camera.
 	bool hasOverlay() const {
-		return nativeOverlay() != boost::none;
+		return !!nativeOverlay();
 	}
 
 	/// Get the serial number of the stereo camera.
