@@ -1,5 +1,4 @@
 #pragma once
-#include "util.hpp"
 
 #include <Eigen/Eigen>
 
@@ -50,14 +49,10 @@ public:
 	}
 
 	/// Get the serial number of the stereo camera.
-	std::string serialNumber() const {
-		return getNx<std::string>(ensenso_camera[itmSerialNumber]);
-	}
+	std::string serialNumber() const;
 
 	/// Get the serial number of the overlay camera or an empty string if there is no overlay camera.
-	std::string overlaySerialNumber() const {
-		return overlay_camera ? getNx<std::string>(overlay_camera.get()[itmSerialNumber]) : "";
-	}
+	std::string overlaySerialNumber() const;
 
 	/// Loads the camera parameters from a JSON file.
 	bool loadParameters(std::string const parameters_file);
@@ -66,7 +61,19 @@ public:
 	bool loadOverlayParameters(std::string const parameters_file);
 
 	/// Loads the overlay camera uEye parameters from a INI file. Returns false if file was not found.
-	void loadOverlayParameterSet(std::string const parameters_file);
+	void loadOverlayUeyeParameters(std::string const parameters_file);
+
+	/// Returns the current FlexView value. If disabled, returns -1.
+	int flexView() const;
+
+	/// Sets the Ensenso camera FlexView value.
+	void setFlexView(int value);
+
+	/// Sets the front light on or off.
+	void setFrontLight(bool state);
+
+	/// Sets the projector on or off.
+	void setProjector(bool state);
 
 	/// Trigger data acquisition on the camera.
 	/**
@@ -85,9 +92,6 @@ public:
 
 	/// Rectifies the images.
 	void rectifyImages();
-
-	/// Returns the pose of the calibration plate with respect to the camera.
-	bool getPatternPose(Eigen::Isometry3d & pose, int const samples);
 
 	/// Returns the size of the intensity images.
 	cv::Size getIntensitySize();
@@ -153,55 +157,55 @@ public:
 	void loadRegisteredPointCloud(pcl::PointCloud<pcl::PointXYZ> & cloud, cv::Rect roi = cv::Rect(), bool capture = true);
 
 	/// Discards all stored calibration patterns.
-	void discardPatterns();
+	void discardCalibrationPatterns();
 
 	/// Records a calibration pattern.
 	void recordCalibrationPattern();
 
+	/// Detect the calibration pattern and estimate the pose of the pattern.
+	/**
+	 * This function will record a number of images and detect the calibration pattern on each image.
+	 *
+	 * The returned pose can be relative to the calibrated frame, or relative to the left stereo lens (default).
+	 *
+	 * \return The estimated pose of the pattern.
+	 */
+	Eigen::Isometry3d detectCalibrationPattern(
+		int const samples,             ///< The number of samples to record.
+		bool calibrated_frame = false  ///< If true, give the pose in the calibrated frame.
+	);
+
+	/// Get the frame the camera is calibrated to, if any.
+	boost::optional<std::string> getCalibrationFrame();
+
+	/// Get the active workspace calibration.
+	/**
+	 * \return The pose of the camera in the calibrated frame, if the camera is calibrated. Otherwise an empty optional.
+	 */
+	boost::optional<Eigen::Isometry3d> getWorkspaceCalibration();
+
 	/// Performs calibration using previously recorded calibration results and the corresponding robot poses.
 	CalibrationResult computeCalibration(
 		std::vector<Eigen::Isometry3d> const & robot_poses,            ///< Vector of robot poses corresponding to the stored calibration patterns.
-		bool moving,                                                   ///< If true, the camera is expected to be in hand. Otherwise the camera is expected to be fixed.
+		bool camera_moving,                                            ///< If true, the camera is expected to be in hand. Otherwise the camera is expected to be fixed.
 		boost::optional<Eigen::Isometry3d> const & camera_guess = {},  ///< Initial guess for the camera relative to the hand (camera in hand) or camera relative to robot base (camera fixed). Not necessary, but speeds up calibration.
 		boost::optional<Eigen::Isometry3d> const & pattern_guess = {}, ///< Initial guess for the pattern relative to the hand (camera in hand) or pattern relative to robot base (camera fixed). Not necessary, but speeds up calibration.
 		std::string const & target = ""                                ///< Target frame to calibrate to. Default is "Hand" for camera in hand and "Workspace" for fixed camera.
 	);
 
-	/// Get the frame the camera is calibrated to, if any.
-	boost::optional<std::string> getFrame();
+	/// Sets the active workspace calibration.
+	void setWorkspaceCalibration(
+		Eigen::Isometry3d const & workspace,
+		std::string const & frame_id = "Workspace",
+		Eigen::Isometry3d const & defined_pose = Eigen::Isometry3d::Identity(),
+		bool store = false
+	);
 
-	/// Get the pose of the camera in the calibrated frame, if the camera is calibrated.
-	boost::optional<Eigen::Isometry3d> getCameraPose();
+	/// Clears the active workspace calibration.
+	void clearWorkspaceCalibration(bool store = false);
 
-	/// Clears the Workspace, if it exists.
-	void clearWorkspace();
-
-	/// Returns the current FlexView value. If disabled, returns -1.
-	int flexView() const {
-		try {
-			// in case FlexView = false, getting the int value gives an error
-			return getNx<int>(ensenso_camera[itmParameters][itmCapture][itmFlexView]);
-		} catch (NxError const & e) {
-			return -1;
-		}
-	}
-
-	/// Sets the Ensenso camera FlexView value.
-	void setFlexView(int value) {
-		setNx(ensenso_camera[itmParameters][itmCapture][itmFlexView], value);
-	}
-
-	/// Sets the Workspace calibration link.
-	void setWorkspace(Eigen::Isometry3d const & workspace, std::string const & frame_id = "Workspace", Eigen::Isometry3d const & defined_pose = Eigen::Isometry3d::Identity());
-
-	/// Stores the caliration on the EEPROM of the camera.
-	void storeCalibration();
-
-	/// Sets the front light on or off.
-	void setFrontLight(bool state);
-
-	/// Sets the projector on or off.
-	void setProjector(bool state);
+	/// Stores the active workspace caliration on the EEPROM of the camera.
+	void storeWorkspaceCalibration();
 
 protected:
 	/// Set the region of interest for the disparity map (and thereby depth / point cloud).
