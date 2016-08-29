@@ -20,15 +20,15 @@ protected:
 	/// The Ensenso camera node.
 	NxLibItem ensenso_camera;
 
-	/// The overlay camera node.
-	boost::optional<NxLibItem> overlay_camera;
+	/// The attached monocular camera node.
+	boost::optional<NxLibItem> monocular_camera;
 
 public:
 	/// Ensenso calibration result (camera pose, pattern pose, iterations needed, reprojection error).
 	using CalibrationResult = std::tuple<Eigen::Isometry3d, Eigen::Isometry3d, int, double>;
 
 	/// Connect to an ensenso camera.
-	Ensenso(std::string serial = "", bool connect_overlay = true);
+	Ensenso(std::string serial = "", bool connect_monocular = true);
 
 	/// Destructor.
 	~Ensenso();
@@ -38,30 +38,30 @@ public:
 		return ensenso_camera;
 	}
 
-	/// Get the native nxLibItem for the overlay camera (if any).
-	boost::optional<NxLibItem> nativeOverlay() const {
-		return overlay_camera;
+	/// Get the native nxLibItem for the monocular camera (if any).
+	boost::optional<NxLibItem> nativeMonocular() const {
+		return monocular_camera;
 	}
 
-	/// Returns whether the Ensenso has an overlay camera.
-	bool hasOverlay() const {
-		return !!nativeOverlay();
+	/// Returns whether the Ensenso has a monocular camera.
+	bool hasMonocular() const {
+		return !!nativeMonocular();
 	}
 
 	/// Get the serial number of the stereo camera.
 	std::string serialNumber() const;
 
-	/// Get the serial number of the overlay camera or an empty string if there is no overlay camera.
-	std::string overlaySerialNumber() const;
+	/// Get the serial number of the monocular camera or an empty string if there is no monocular camera.
+	std::string monocularSerialNumber() const;
 
 	/// Loads the camera parameters from a JSON file.
 	bool loadParameters(std::string const parameters_file);
 
-	/// Loads the overlay camera parameters from a JSON file. Returns false if file was not found.
-	bool loadOverlayParameters(std::string const parameters_file);
+	/// Loads the monocular camera parameters from a JSON file. Returns false if file was not found.
+	bool loadMonocularParameters(std::string const parameters_file);
 
-	/// Loads the overlay camera uEye parameters from a INI file. Returns false if file was not found.
-	void loadOverlayUeyeParameters(std::string const parameters_file);
+	/// Loads the monocular camera uEye parameters from a INI file. Returns false if file was not found.
+	void loadMonocularUeyeParameters(std::string const parameters_file);
 
 	/// Returns the current FlexView value. If disabled, returns -1.
 	int flexView() const;
@@ -78,17 +78,17 @@ public:
 	/// Trigger data acquisition on the camera.
 	/**
 	 * \param stereo If true, capture data from the stereo camera.
-	 * \param overlay If true, capture data from the overlay camera.
+	 * \param monocular If true, capture data from the monocular camera.
 	 */
-	bool trigger(bool stereo = true, bool overlay=true) const;
+	bool trigger(bool stereo = true, bool monocular=true) const;
 
 	/// Retrieve new data from the camera without sending a software trigger.
 	/**
 	 * \param timeout A timeout in milliseconds.
 	 * \param stereo If true, capture data from the stereo camera.
-	 * \param overlay If true, capture data from the overlay camera.
+	 * \param monocular If true, capture data from the monocular camera.
 	 */
-	bool retrieve(bool trigger = true, unsigned int timeout = 1500, bool stereo = true, bool overlay=true) const;
+	bool retrieve(bool trigger = true, unsigned int timeout = 1500, bool stereo = true, bool monocular=true) const;
 
 	/// Rectifies the images.
 	void rectifyImages();
@@ -148,7 +148,7 @@ public:
 		return result;
 	}
 
-	/// Loads the pointcloud registered to the overlay camera.
+	/// Loads the pointcloud registered to the monocular camera.
 	/**
 	 * \param cloud the resulting pointcloud.
 	 * \param roi The region of interest.

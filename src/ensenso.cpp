@@ -8,7 +8,7 @@
 
 namespace dr {
 
-Ensenso::Ensenso(std::string serial, bool connect_overlay) {
+Ensenso::Ensenso(std::string serial, bool connect_monocular) {
 	// Initialize nxLib.
 	nxLibInitialize();
 
@@ -24,8 +24,8 @@ Ensenso::Ensenso(std::string serial, bool connect_overlay) {
 		ensenso_camera = *camera;
 	}
 
-	// Get the linked overlay camera.
-	if (connect_overlay) overlay_camera = openCameraByLink(serialNumber());
+	// Get the linked monocular camera.
+	if (connect_monocular) monocular_camera = openCameraByLink(serialNumber());
 }
 
 Ensenso::~Ensenso() {
@@ -37,21 +37,21 @@ std::string Ensenso::serialNumber() const {
 	return getNx<std::string>(ensenso_camera[itmSerialNumber]);
 }
 
-std::string Ensenso::overlaySerialNumber() const {
-	return overlay_camera ? getNx<std::string>(overlay_camera.get()[itmSerialNumber]) : "";
+std::string Ensenso::monocularSerialNumber() const {
+	return monocular_camera ? getNx<std::string>(monocular_camera.get()[itmSerialNumber]) : "";
 }
 
 bool Ensenso::loadParameters(std::string const parameters_file) {
 	return setNxJsonFromFile(ensenso_camera[itmParameters], parameters_file);
 }
 
-bool Ensenso::loadOverlayParameters(std::string const parameters_file) {
-	if (!overlay_camera) throw std::runtime_error("No overlay camera found. Can not load overlay parameters.");
-	return setNxJsonFromFile(overlay_camera.get()[itmParameters], parameters_file);
+bool Ensenso::loadMonocularParameters(std::string const parameters_file) {
+	if (!monocular_camera) throw std::runtime_error("No monocular camera found. Can not load monocular camara parameters.");
+	return setNxJsonFromFile(monocular_camera.get()[itmParameters], parameters_file);
 }
 
-void Ensenso::loadOverlayUeyeParameters(std::string const parameters_file) {
-	if (!overlay_camera) throw std::runtime_error("No overlay camera found. Can not load overlay parameter set.");
+void Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
+	if (!monocular_camera) throw std::runtime_error("No monocular camera found. Can not load monocular camera UEye parameters.");
 	NxLibCommand command(cmdLoadUEyeParameterSet);
 	setNx(command.parameters()[itmFilename], parameters_file);
 	executeNx(command);
@@ -78,34 +78,34 @@ void Ensenso::setProjector(bool state) {
 	setNx(ensenso_camera[itmParameters][itmCapture][itmProjector], state);
 }
 
-bool Ensenso::trigger(bool stereo, bool overlay) const {
-	overlay = overlay && overlay_camera;
+bool Ensenso::trigger(bool stereo, bool monocular) const {
+	monocular = monocular && monocular_camera;
 
 	NxLibCommand command(cmdTrigger);
 	if (stereo) setNx(command.parameters()[itmCameras][0], serialNumber());
-	if (overlay) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(overlay_camera.get()[itmSerialNumber]));
+	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_camera.get()[itmSerialNumber]));
 	executeNx(command);
 
 	if (stereo && !getNx<bool>(command.result()[serialNumber()][itmTriggered])) return false;
-	if (overlay && !getNx<bool>(command.result()[overlaySerialNumber()][itmTriggered])) return false;
+	if (monocular && !getNx<bool>(command.result()[monocularSerialNumber()][itmTriggered])) return false;
 	return true;
 }
 
-bool Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, bool overlay) const {
-	overlay = overlay && overlay_camera;
+bool Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, bool monocular) const {
+	monocular = monocular && monocular_camera;
 
 	// nothing to do?
-	if (!stereo && !overlay)
+	if (!stereo && !monocular)
 		return true;
 
 	NxLibCommand command(trigger ? cmdCapture : cmdRetrieve);
 	setNx(command.parameters()[itmTimeout], int(timeout));
 	if (stereo) setNx(command.parameters()[itmCameras][0], serialNumber());
-	if (overlay) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(overlay_camera.get()[itmSerialNumber]));
+	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_camera.get()[itmSerialNumber]));
 	executeNx(command);
 
 	if (stereo && !getNx<bool>(command.result()[serialNumber()][itmRetrieved])) return false;
-	if (overlay && !getNx<bool>(command.result()[overlaySerialNumber()][itmRetrieved])) return false;
+	if (monocular && !getNx<bool>(command.result()[monocularSerialNumber()][itmRetrieved])) return false;
 	return true;
 }
 
@@ -119,7 +119,7 @@ cv::Size Ensenso::getIntensitySize() {
 	int width, height;
 
 	try {
-		overlay_camera.get()[itmImages][itmRaw].getBinaryDataInfo(&width, &height, 0, 0, 0, 0);
+		monocular_camera.get()[itmImages][itmRaw].getBinaryDataInfo(&width, &height, 0, 0, 0, 0);
 	} catch (NxLibException const & e) {
 		throw NxError(e);
 	}
@@ -134,11 +134,11 @@ cv::Size Ensenso::getPointCloudSize() {
 }
 
 void Ensenso::loadIntensity(cv::Mat & intensity, bool capture) {
-	if (capture) this->retrieve(true, 1500, !overlay_camera, !!overlay_camera);
+	if (capture) this->retrieve(true, 1500, !monocular_camera, !!monocular_camera);
 
 	// Copy to cv::Mat.
-	if (overlay_camera) {
-		intensity = toCvMat(overlay_camera.get()[itmImages][itmRaw]);
+	if (monocular_camera) {
+		intensity = toCvMat(monocular_camera.get()[itmImages][itmRaw]);
 	} else {
 		rectifyImages();
 		intensity = toCvMat(ensenso_camera[itmImages][itmRectified][itmLeft]);
@@ -188,7 +188,7 @@ void Ensenso::loadRegisteredPointCloud(pcl::PointCloud<pcl::PointXYZ> & cloud, c
 	{
 		NxLibCommand command(cmdRenderPointMap);
 		setNx(command.parameters()[itmNear], 1); // distance in millimeters to the camera (clip nothing?)
-		setNx(command.parameters()[itmCamera], overlaySerialNumber());
+		setNx(command.parameters()[itmCamera], monocularSerialNumber());
 		// gives weird (RenderPointMap) results with OpenGL enabled, so disable
 		setNx(root[itmParameters][itmRenderPointMap][itmUseOpenGL], false);
 		executeNx(command);
