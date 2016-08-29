@@ -175,8 +175,8 @@ public:
 		bool calibrated_frame = false  ///< If true, give the pose in the calibrated frame.
 	);
 
-	/// Get the frame the camera is calibrated to, if any.
-	boost::optional<std::string> getWorkspaceCalibrationFrame();
+	/// Get the frame the camera is calibrated to, or an empty string.
+	std::string getWorkspaceCalibrationFrame();
 
 	/// Get the active workspace calibration.
 	/**

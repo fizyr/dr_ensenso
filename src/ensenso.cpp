@@ -279,6 +279,25 @@ Eigen::Isometry3d Ensenso::detectCalibrationPattern(int const samples, bool cali
 	return result;
 }
 
+std::string Ensenso::getWorkspaceCalibrationFrame() {
+	// Make sure the relevant nxLibItem exists and is non-empty, then return it.
+	NxLibItem item = ensenso_camera[itmLink][itmTarget];
+	int error;
+	std::string result = item.asString(&error);
+	return error ? "" : result;
+}
+
+boost::optional<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
+	// Check if the camera is calibrated.
+	if (getWorkspaceCalibrationFrame().empty()) return boost::none;
+
+	// convert from mm to m
+	Eigen::Isometry3d pose = toEigenIsometry(ensenso_camera[itmLink]);
+	pose.translation() *= 0.001;
+
+	return pose;
+}
+
 Ensenso::CalibrationResult Ensenso::computeCalibration(
 	std::vector<Eigen::Isometry3d> const & robot_poses,
 	bool moving,
@@ -359,7 +378,7 @@ void Ensenso::setWorkspaceCalibration(Eigen::Isometry3d const & workspace, std::
 
 void Ensenso::clearWorkspaceCalibration(bool store) {
 	// Check if the camera is calibrated.
-	if (!getWorkspaceCalibrationFrame()) return;
+	if (getWorkspaceCalibrationFrame().empty()) return;
 
 	// calling CalibrateWorkspace with no PatternPose and DefinedPose clears the workspace.
 	NxLibCommand command(cmdCalibrateWorkspace);
@@ -379,26 +398,6 @@ void Ensenso::storeWorkspaceCalibration() {
 	NxLibCommand command(cmdStoreCalibration);
 	setNx(command.parameters()[itmCameras][0], serialNumber());
 	executeNx(command);
-}
-
-boost::optional<std::string> Ensenso::getWorkspaceCalibrationFrame() {
-	// Make sure the relevant nxLibItem exists and is non-empty, then return it.
-	NxLibItem item = ensenso_camera[itmLink][itmTarget];
-	if (!item.exists()) return boost::none;
-	std::string frame = getNx<std::string>(item);
-	if (frame.empty()) return boost::none;
-	return frame;
-}
-
-boost::optional<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
-	// Check if the camera is calibrated.
-	if (!getWorkspaceCalibrationFrame()) return boost::none;
-
-	// convert from mm to m
-	Eigen::Isometry3d pose = toEigenIsometry(ensenso_camera[itmLink]);
-	pose.translation() *= 0.001;
-
-	return pose;
 }
 
 }
