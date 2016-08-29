@@ -359,7 +359,7 @@ void Ensenso::setWorkspaceCalibration(Eigen::Isometry3d const & workspace, std::
 
 void Ensenso::clearWorkspaceCalibration(bool store) {
 	// Check if the camera is calibrated.
-	if (!getCalibrationFrame()) return;
+	if (!getWorkspaceCalibrationFrame()) return;
 
 	// calling CalibrateWorkspace with no PatternPose and DefinedPose clears the workspace.
 	NxLibCommand command(cmdCalibrateWorkspace);
@@ -381,7 +381,7 @@ void Ensenso::storeWorkspaceCalibration() {
 	executeNx(command);
 }
 
-boost::optional<std::string> Ensenso::getCalibrationFrame() {
+boost::optional<std::string> Ensenso::getWorkspaceCalibrationFrame() {
 	// Make sure the relevant nxLibItem exists and is non-empty, then return it.
 	NxLibItem item = ensenso_camera[itmLink][itmTarget];
 	if (!item.exists()) return boost::none;
@@ -392,7 +392,7 @@ boost::optional<std::string> Ensenso::getCalibrationFrame() {
 
 boost::optional<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
 	// Check if the camera is calibrated.
-	if (!getCalibrationFrame()) return boost::none;
+	if (!getWorkspaceCalibrationFrame()) return boost::none;
 
 	// convert from mm to m
 	Eigen::Isometry3d pose = toEigenIsometry(ensenso_camera[itmLink]);

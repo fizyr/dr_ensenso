@@ -176,7 +176,7 @@ public:
 	);
 
 	/// Get the frame the camera is calibrated to, if any.
-	boost::optional<std::string> getCalibrationFrame();
+	boost::optional<std::string> getWorkspaceCalibrationFrame();
 
 	/// Get the active workspace calibration.
 	/**
