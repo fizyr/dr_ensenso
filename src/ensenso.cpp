@@ -245,7 +245,7 @@ void Ensenso::recordCalibrationPattern() {
 	}
 }
 
-Eigen::Isometry3d Ensenso::detectCalibrationPattern(int const samples, bool calibrated_frame)  {
+Eigen::Isometry3d Ensenso::detectCalibrationPattern(int const samples, bool ignore_calibration)  {
 	discardCalibrationPatterns();
 
 	for (int i = 0; i < samples; ++i) {
@@ -269,7 +269,7 @@ Eigen::Isometry3d Ensenso::detectCalibrationPattern(int const samples, bool cali
 	result.translation() *= 0.001;
 
 	// Transform back to left stereo lens.
-	if (!calibrated_frame) {
+	if (ignore_calibration) {
 		boost::optional<Eigen::Isometry3d> camera_pose = getWorkspaceCalibration();
 		if (camera_pose) {
 			result = *camera_pose * result;
@@ -354,7 +354,6 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 }
 
 void Ensenso::setWorkspaceCalibration(Eigen::Isometry3d const & workspace, std::string const & frame_id, Eigen::Isometry3d const & defined_pose, bool store) {
-	// calling CalibrateWorkspace with no PatternPose and DefinedPose clears the workspace.
 	NxLibCommand command(cmdCalibrateWorkspace);
 	setNx(command.parameters()[itmCameras][0], serialNumber());
 

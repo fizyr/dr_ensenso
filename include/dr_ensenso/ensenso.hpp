@@ -171,8 +171,8 @@ public:
 	 * \return The estimated pose of the pattern.
 	 */
 	Eigen::Isometry3d detectCalibrationPattern(
-		int const samples,             ///< The number of samples to record.
-		bool calibrated_frame = false  ///< If true, give the pose in the calibrated frame.
+		int const samples,               ///< The number of samples to record.
+		bool ignore_calibration = false  ///< If true, give the pose relative to the left stereo lens.
 	);
 
 	/// Get the frame the camera is calibrated to, or an empty string.
