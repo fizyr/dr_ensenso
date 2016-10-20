@@ -11,12 +11,12 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Ensenso REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem date_time chrono)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
 
-SET(SYSTEM_LIBRARIES    ${Ensenso_LIBRARIES}    ${Boost_LIBRARIES}    ${Eigen_LIBRARIES}    ${OpenCV_LIBRARIES}    ${PCL_LIBRARIES})
-SET(SYSTEM_INCLUDE_DIRS ${Ensenso_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+SET(SYSTEM_LIBRARIES    ${Ensenso_LIBRARIES}    ${Boost_LIBRARIES}    ${EIGEN3_LIBRARIES}    ${OpenCV_LIBRARIES}    ${PCL_LIBRARIES})
+SET(SYSTEM_INCLUDE_DIRS ${Ensenso_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 
 catkin_package(
 	INCLUDE_DIRS include ${SYSTEM_INCLUDE_DIRS}
