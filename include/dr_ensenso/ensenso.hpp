@@ -93,6 +93,9 @@ public:
 	/// Rectifies the images.
 	void rectifyImages();
 
+	/// Register the point cloud to the RGB frame.
+	void registerPointCloud();
+
 	/// Returns the size of the intensity images.
 	cv::Size getIntensitySize();
 

@@ -115,6 +115,15 @@ void Ensenso::rectifyImages() {
 	executeNx(command);
 }
 
+void Ensenso::registerPointCloud() {
+	NxLibCommand command(cmdRenderPointMap);
+	setNx(command.parameters()[itmNear], 1); // distance in millimeters to the camera (clip nothing?)
+	setNx(command.parameters()[itmCamera], monocularSerialNumber());
+	// gives weird (RenderPointMap) results with OpenGL enabled, so disable
+	setNx(root[itmParameters][itmRenderPointMap][itmUseOpenGL], false);
+	executeNx(command);
+}
+
 cv::Size Ensenso::getIntensitySize() {
 	int width, height;
 
@@ -184,15 +193,7 @@ void Ensenso::loadRegisteredPointCloud(pcl::PointCloud<pcl::PointXYZ> & cloud, c
 		executeNx(command);
 	}
 
-	// Render point cloud.
-	{
-		NxLibCommand command(cmdRenderPointMap);
-		setNx(command.parameters()[itmNear], 1); // distance in millimeters to the camera (clip nothing?)
-		setNx(command.parameters()[itmCamera], monocularSerialNumber());
-		// gives weird (RenderPointMap) results with OpenGL enabled, so disable
-		setNx(root[itmParameters][itmRenderPointMap][itmUseOpenGL], false);
-		executeNx(command);
-	}
+	registerPointCloud();
 
 	// Convert the binary data to a point cloud.
 	cloud = toPointCloud(root[itmImages][itmRenderPointMap]);
