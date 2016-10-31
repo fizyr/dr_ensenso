@@ -90,6 +90,8 @@ bool setNxJsonFromFile(NxLibItem const & item, std::string const & filename, std
 		return false;
 	}
 
+	file.exceptions(std::ios::failbit | std::ios::badbit);
+
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	setNxJson(item, buffer.str(), what);
