@@ -12,20 +12,33 @@
 
 namespace dr {
 
+enum class ImageType {
+	stereo_raw_left,
+	stereo_raw_right,
+	stereo_rectified_left,
+	stereo_rectified_right,
+	disparity,
+	monocular_raw,
+	monocular_rectified,
+	monocular_overlay,
+};
+
 class Ensenso {
+public:
+	/// Ensenso calibration result (camera pose, pattern pose, iterations needed, reprojection error).
+	using CalibrationResult = std::tuple<Eigen::Isometry3d, Eigen::Isometry3d, int, double>;
+
 protected:
 	/// The root EnsensoSDK node.
 	NxLibItem root;
 
 	/// The Ensenso camera node.
-	NxLibItem ensenso_camera;
+	NxLibItem stereo_node;
 
 	/// The attached monocular camera node.
-	boost::optional<NxLibItem> monocular_camera;
+	boost::optional<NxLibItem> monocular_node;
 
 public:
-	/// Ensenso calibration result (camera pose, pattern pose, iterations needed, reprojection error).
-	using CalibrationResult = std::tuple<Eigen::Isometry3d, Eigen::Isometry3d, int, double>;
 
 	/// Connect to an ensenso camera.
 	Ensenso(std::string serial = "", bool connect_monocular = true);
@@ -35,12 +48,12 @@ public:
 
 	/// Get the native nxLibItem for the stereo camera.
 	NxLibItem native() const {
-		return ensenso_camera;
+		return stereo_node;
 	}
 
 	/// Get the native nxLibItem for the monocular camera (if any).
 	boost::optional<NxLibItem> nativeMonocular() const {
-		return monocular_camera;
+		return monocular_node;
 	}
 
 	/// Returns whether the Ensenso has a monocular camera.
@@ -75,6 +88,12 @@ public:
 	/// Sets the projector on or off.
 	void setProjector(bool state);
 
+	/// Set the region of interest for the disparity map (and thereby depth / point cloud).
+	/**
+	 * An empty (default constructed) rect clears the ROI.
+	 */
+	void setDisparityRegionOfInterest(cv::Rect const & roi);
+
 	/// Trigger data acquisition on the camera.
 	/**
 	 * \param stereo If true, capture data from the stereo camera.
@@ -93,71 +112,36 @@ public:
 	/// Rectifies the images.
 	void rectifyImages();
 
+	/// Compute the disparity.
+	void computeDisparity();
+
+	/// Compute the point cloud.
+	void computePointCloud();
+
 	/// Register the point cloud to the RGB frame.
 	void registerPointCloud();
 
-	/// Returns the size of the intensity images.
-	cv::Size getIntensitySize();
-
-	/// Returns the size of the depth images.
-	cv::Size getPointCloudSize();
-
-	/// Loads the intensity image to intensity.
+	/// Load an image from the camera.
 	/**
-	 * \param capture If true, capture a new image before loading the point cloud.
+	 * The image must have been captured, retrieved and/or processed before it can be loaded.
 	 */
-	void loadIntensity(cv::Mat & intensity, bool capture);
+	cv::Mat loadImage(ImageType type);
 
-	/// Loads the intensity image to intensity.
-	void loadIntensity(cv::Mat & intensity) {
-		loadIntensity(intensity, true);
-	}
-
-	/// Get the intensity image.
+	/// Load the point cloud from the camera.
 	/**
-	 * \return The intensity image.
-	 */
-	cv::Mat getIntensity() {
-		cv::Mat intensity;
-		loadIntensity(intensity);
-		return intensity;
-	}
-
-	/// Loads the pointcloud from depth in the region of interest.
-	/**
-	 * \param cloud the resulting pointcloud.
-	 * \param roi The region of interest.
-	 * \param capture If true, capture a new image before loading the point cloud.
-	 */
-	void loadPointCloud(pcl::PointCloud<pcl::PointXYZ> & cloud, cv::Rect roi, bool capture);
-
-	/// Loads the pointcloud from depth in the region of interest.
-	/**
-	 * \param cloud the resulting pointcloud.
+	 * The point cloud must have been computed before it can be loaded.
+	 *
 	 * \param roi The region of interest.
 	 */
-	void loadPointCloud(pcl::PointCloud<pcl::PointXYZ> & cloud, cv::Rect roi = cv::Rect()) {
-		return loadPointCloud(cloud, roi, true);
-	}
-
-	/// Get a pointlcoud from the camera.
-	/**
-	 * \param roi The region of interest.
-	 * \param capture If true, capture a new image before loading the point cloud.
-	 */
-	pcl::PointCloud<pcl::PointXYZ> getPointCloud(cv::Rect roi = cv::Rect(), bool capture = true) {
-		pcl::PointCloud<pcl::PointXYZ> result;
-		loadPointCloud(result, roi, capture);
-		return result;
-	}
+	pcl::PointCloud<pcl::PointXYZ> loadPointCloud();
 
 	/// Loads the pointcloud registered to the monocular camera.
 	/**
-	 * \param cloud the resulting pointcloud.
+	 * The point cloud must have been computed and registered before it can be loaded.
+	 *
 	 * \param roi The region of interest.
-	 * \param capture If true, capture a new image before loading the point cloud.
 	 */
-	void loadRegisteredPointCloud(pcl::PointCloud<pcl::PointXYZ> & cloud, cv::Rect roi = cv::Rect(), bool capture = true);
+	pcl::PointCloud<pcl::PointXYZ> loadRegisteredPointCloud();
 
 	/// Discards all stored calibration patterns.
 	void discardCalibrationPatterns();
@@ -187,15 +171,6 @@ public:
 	 */
 	boost::optional<Eigen::Isometry3d> getWorkspaceCalibration();
 
-	/// Performs calibration using previously recorded calibration results and the corresponding robot poses.
-	CalibrationResult computeCalibration(
-		std::vector<Eigen::Isometry3d> const & robot_poses,            ///< Vector of robot poses corresponding to the stored calibration patterns.
-		bool camera_moving,                                            ///< If true, the camera is expected to be in hand. Otherwise the camera is expected to be fixed.
-		boost::optional<Eigen::Isometry3d> const & camera_guess = {},  ///< Initial guess for the camera relative to the hand (camera in hand) or camera relative to robot base (camera fixed). Not necessary, but speeds up calibration.
-		boost::optional<Eigen::Isometry3d> const & pattern_guess = {}, ///< Initial guess for the pattern relative to the hand (camera in hand) or pattern relative to robot base (camera fixed). Not necessary, but speeds up calibration.
-		std::string const & target = ""                                ///< Target frame to calibrate to. Default is "Hand" for camera in hand and "Workspace" for fixed camera.
-	);
-
 	/// Sets the active workspace calibration.
 	void setWorkspaceCalibration(
 		Eigen::Isometry3d const & workspace,
@@ -210,9 +185,14 @@ public:
 	/// Stores the active workspace caliration on the EEPROM of the camera.
 	void storeWorkspaceCalibration();
 
-protected:
-	/// Set the region of interest for the disparity map (and thereby depth / point cloud).
-	void setRegionOfInterest(cv::Rect const & roi);
+	/// Performs calibration using previously recorded calibration results and the corresponding robot poses.
+	CalibrationResult computeCalibration(
+		std::vector<Eigen::Isometry3d> const & robot_poses,            ///< Vector of robot poses corresponding to the stored calibration patterns.
+		bool camera_moving,                                            ///< If true, the camera is expected to be in hand. Otherwise the camera is expected to be fixed.
+		boost::optional<Eigen::Isometry3d> const & camera_guess = {},  ///< Initial guess for the camera relative to the hand (camera in hand) or camera relative to robot base (camera fixed). Not necessary, but speeds up calibration.
+		boost::optional<Eigen::Isometry3d> const & pattern_guess = {}, ///< Initial guess for the pattern relative to the hand (camera in hand) or pattern relative to robot base (camera fixed). Not necessary, but speeds up calibration.
+		std::string const & target = ""                                ///< Target frame to calibrate to. Default is "Hand" for camera in hand and "Workspace" for fixed camera.
+	);
 
 };
 

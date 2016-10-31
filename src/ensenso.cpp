@@ -8,6 +8,20 @@
 
 namespace dr {
 
+NxLibItem imageNode(NxLibItem stereo, boost::optional<NxLibItem> monocular, ImageType type) {
+	switch (type) {
+		case ImageType::stereo_raw_left:             return stereo[itmImages][itmRaw][itmLeft];
+		case ImageType::stereo_raw_right:            return stereo[itmImages][itmRaw][itmRight];
+		case ImageType::stereo_rectified_left:       return stereo[itmImages][itmRectified][itmLeft];
+		case ImageType::stereo_rectified_right:      return stereo[itmImages][itmRectified][itmRight];
+		case ImageType::disparity:                   return stereo[itmImages][itmDisparityMap];
+		case ImageType::monocular_raw:               return (*monocular)[itmImages][itmRaw];
+		case ImageType::monocular_rectified:         return (*monocular)[itmImages][itmRectified];
+		case ImageType::monocular_overlay:           return (*monocular)[itmImages][itmWithOverlay];
+	}
+	throw std::runtime_error("Failed to get image node: unknown image type: " + std::to_string(int(type)));
+}
+
 Ensenso::Ensenso(std::string serial, bool connect_monocular) {
 	// Initialize nxLib.
 	nxLibInitialize();
@@ -15,17 +29,20 @@ Ensenso::Ensenso(std::string serial, bool connect_monocular) {
 	if (serial == "") {
 		// Try to find a stereo camera.
 		boost::optional<NxLibItem> camera = openCameraByType(valStereo);
-		if (!camera) throw std::runtime_error("Please connect an Ensenso stereo camera to your computer.");
-		ensenso_camera = *camera;
+		if (!camera) throw std::runtime_error("Failed to open any Ensenso camera.");
+		stereo_node = *camera;
 	} else {
 		// Open the requested camera.
 		boost::optional<NxLibItem> camera = openCameraBySerial(serial);
-		if (!camera) throw std::runtime_error("Could not find an Ensenso camera with serial " + serial);
-		ensenso_camera = *camera;
+		if (!camera) throw std::runtime_error("Could not open an Ensenso camera with serial " + serial + ".");
+		stereo_node = *camera;
 	}
 
 	// Get the linked monocular camera.
-	if (connect_monocular) monocular_camera = openCameraByLink(serialNumber());
+	if (connect_monocular) {
+		monocular_node = openCameraByLink(serialNumber());
+		if (!monocular_node) throw std::runtime_error("Failed to open linked monocular camera.");
+	}
 }
 
 Ensenso::~Ensenso() {
@@ -34,24 +51,24 @@ Ensenso::~Ensenso() {
 }
 
 std::string Ensenso::serialNumber() const {
-	return getNx<std::string>(ensenso_camera[itmSerialNumber]);
+	return getNx<std::string>(stereo_node[itmSerialNumber]);
 }
 
 std::string Ensenso::monocularSerialNumber() const {
-	return monocular_camera ? getNx<std::string>(monocular_camera.get()[itmSerialNumber]) : "";
+	return monocular_node ? getNx<std::string>(monocular_node.get()[itmSerialNumber]) : "";
 }
 
 bool Ensenso::loadParameters(std::string const parameters_file) {
-	return setNxJsonFromFile(ensenso_camera[itmParameters], parameters_file);
+	return setNxJsonFromFile(stereo_node[itmParameters], parameters_file);
 }
 
 bool Ensenso::loadMonocularParameters(std::string const parameters_file) {
-	if (!monocular_camera) throw std::runtime_error("No monocular camera found. Can not load monocular camara parameters.");
-	return setNxJsonFromFile(monocular_camera.get()[itmParameters], parameters_file);
+	if (!monocular_node) throw std::runtime_error("No monocular camera found. Can not load monocular camara parameters.");
+	return setNxJsonFromFile(monocular_node.get()[itmParameters], parameters_file);
 }
 
 void Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
-	if (!monocular_camera) throw std::runtime_error("No monocular camera found. Can not load monocular camera UEye parameters.");
+	if (!monocular_node) throw std::runtime_error("No monocular camera found. Can not load monocular camera UEye parameters.");
 	NxLibCommand command(cmdLoadUEyeParameterSet);
 	setNx(command.parameters()[itmFilename], parameters_file);
 	executeNx(command);
@@ -60,30 +77,46 @@ void Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
 int Ensenso::flexView() const {
 	try {
 		// in case FlexView = false, getting the int value gives an error
-		return getNx<int>(ensenso_camera[itmParameters][itmCapture][itmFlexView]);
+		return getNx<int>(stereo_node[itmParameters][itmCapture][itmFlexView]);
 	} catch (NxError const & e) {
 		return -1;
 	}
 }
 
 void Ensenso::setFlexView(int value) {
-	setNx(ensenso_camera[itmParameters][itmCapture][itmFlexView], value);
+	setNx(stereo_node[itmParameters][itmCapture][itmFlexView], value);
 }
 
 void Ensenso::setFrontLight(bool state) {
-	setNx(ensenso_camera[itmParameters][itmCapture][itmFrontLight], state);
+	setNx(stereo_node[itmParameters][itmCapture][itmFrontLight], state);
 }
 
 void Ensenso::setProjector(bool state) {
-	setNx(ensenso_camera[itmParameters][itmCapture][itmProjector], state);
+	setNx(stereo_node[itmParameters][itmCapture][itmProjector], state);
+}
+
+void Ensenso::setDisparityRegionOfInterest(cv::Rect const & roi) {
+	if (roi.area() == 0) {
+		setNx(stereo_node[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest], false);
+
+		if (stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest].exists()) {
+			stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest].erase();
+		}
+	} else {
+		setNx(stereo_node[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest],          true);
+		setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][0],     roi.tl().x);
+		setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1],     roi.tl().y);
+		setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0], roi.br().x);
+		setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1], roi.br().y);
+	}
 }
 
 bool Ensenso::trigger(bool stereo, bool monocular) const {
-	monocular = monocular && monocular_camera;
+	monocular = monocular && monocular_node;
 
 	NxLibCommand command(cmdTrigger);
 	if (stereo) setNx(command.parameters()[itmCameras][0], serialNumber());
-	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_camera.get()[itmSerialNumber]));
+	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_node.get()[itmSerialNumber]));
 	executeNx(command);
 
 	if (stereo && !getNx<bool>(command.result()[serialNumber()][itmTriggered])) return false;
@@ -92,7 +125,7 @@ bool Ensenso::trigger(bool stereo, bool monocular) const {
 }
 
 bool Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, bool monocular) const {
-	monocular = monocular && monocular_camera;
+	monocular = monocular && monocular_node;
 
 	// nothing to do?
 	if (!stereo && !monocular)
@@ -101,7 +134,7 @@ bool Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, bool mon
 	NxLibCommand command(trigger ? cmdCapture : cmdRetrieve);
 	setNx(command.parameters()[itmTimeout], int(timeout));
 	if (stereo) setNx(command.parameters()[itmCameras][0], serialNumber());
-	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_camera.get()[itmSerialNumber]));
+	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_node.get()[itmSerialNumber]));
 	executeNx(command);
 
 	if (stereo && !getNx<bool>(command.result()[serialNumber()][itmRetrieved])) return false;
@@ -115,6 +148,18 @@ void Ensenso::rectifyImages() {
 	executeNx(command);
 }
 
+void Ensenso::computeDisparity() {
+	NxLibCommand command(cmdComputeDisparityMap);
+	setNx(command.parameters()[itmCameras], serialNumber());
+	executeNx(command);
+}
+
+void Ensenso::computePointCloud() {
+	NxLibCommand command(cmdComputePointMap);
+	setNx(command.parameters()[itmCameras], serialNumber());
+	executeNx(command);
+}
+
 void Ensenso::registerPointCloud() {
 	NxLibCommand command(cmdRenderPointMap);
 	setNx(command.parameters()[itmNear], 1); // distance in millimeters to the camera (clip nothing?)
@@ -124,95 +169,17 @@ void Ensenso::registerPointCloud() {
 	executeNx(command);
 }
 
-cv::Size Ensenso::getIntensitySize() {
-	int width, height;
-
-	try {
-		monocular_camera.get()[itmImages][itmRaw].getBinaryDataInfo(&width, &height, 0, 0, 0, 0);
-	} catch (NxLibException const & e) {
-		throw NxError(e);
-	}
-
-	return cv::Size(width, height);
+cv::Mat Ensenso::loadImage(ImageType type) {
+	return toCvMat(imageNode(stereo_node, monocular_node, type));
 }
 
-cv::Size Ensenso::getPointCloudSize() {
-	int width, height;
-	ensenso_camera[itmImages][itmPointMap].getBinaryDataInfo(&width, &height, 0, 0, 0, 0);
-	return cv::Size(width, height);
-}
-
-void Ensenso::loadIntensity(cv::Mat & intensity, bool capture) {
-	if (capture) this->retrieve(true, 1500, !monocular_camera, !!monocular_camera);
-
-	// Copy to cv::Mat.
-	if (monocular_camera) {
-		intensity = toCvMat(monocular_camera.get()[itmImages][itmRaw]);
-	} else {
-		rectifyImages();
-		intensity = toCvMat(ensenso_camera[itmImages][itmRectified][itmLeft]);
-	}
-}
-
-void Ensenso::loadPointCloud(pcl::PointCloud<pcl::PointXYZ> & cloud, cv::Rect roi, bool capture) {
-	// Optionally capture new data.
-	if (capture) this->retrieve();
-
-	setRegionOfInterest(roi);
-	std::string serial = serialNumber();
-
-	// Compute disparity.
-	{
-		NxLibCommand command(cmdComputeDisparityMap);
-		setNx(command.parameters()[itmCameras], serial);
-		executeNx(command);
-	}
-
-	// Compute point cloud.
-	{
-		NxLibCommand command(cmdComputePointMap);
-		setNx(command.parameters()[itmCameras], serial);
-		executeNx(command);
-	}
-
+pcl::PointCloud<pcl::PointXYZ> Ensenso::loadPointCloud() {
 	// Convert the binary data to a point cloud.
-	cloud = toPointCloud(ensenso_camera[itmImages][itmPointMap]);
+	return toPointCloud(stereo_node[itmImages][itmPointMap]);
 }
 
-void Ensenso::loadRegisteredPointCloud(pcl::PointCloud<pcl::PointXYZ> & cloud, cv::Rect roi, bool capture) {
-	// Optionally capture new data.
-	if (capture) this->retrieve();
-
-	setRegionOfInterest(roi);
-	std::string serial = serialNumber();
-
-	// Compute disparity.
-	{
-		NxLibCommand command(cmdComputeDisparityMap);
-		setNx(command.parameters()[itmCameras], serial);
-		executeNx(command);
-	}
-
-	registerPointCloud();
-
-	// Convert the binary data to a point cloud.
-	cloud = toPointCloud(root[itmImages][itmRenderPointMap]);
-}
-
-void Ensenso::setRegionOfInterest(cv::Rect const & roi) {
-	if (roi.area() == 0) {
-		setNx(ensenso_camera[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest], false);
-
-		if (ensenso_camera[itmParameters][itmDisparityMap][itmAreaOfInterest].exists()) {
-			ensenso_camera[itmParameters][itmDisparityMap][itmAreaOfInterest].erase();
-		}
-	} else {
-		setNx(ensenso_camera[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest],          true);
-		setNx(ensenso_camera[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][0],     roi.tl().x);
-		setNx(ensenso_camera[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1],     roi.tl().y);
-		setNx(ensenso_camera[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0], roi.br().x);
-		setNx(ensenso_camera[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1], roi.br().y);
-	}
+pcl::PointCloud<pcl::PointXYZ> Ensenso::loadRegisteredPointCloud() {
+	return toPointCloud(root[itmImages][itmRenderPointMap]);
 }
 
 void Ensenso::discardCalibrationPatterns() {
@@ -282,7 +249,7 @@ Eigen::Isometry3d Ensenso::detectCalibrationPattern(int const samples, bool igno
 
 std::string Ensenso::getWorkspaceCalibrationFrame() {
 	// Make sure the relevant nxLibItem exists and is non-empty, then return it.
-	NxLibItem item = ensenso_camera[itmLink][itmTarget];
+	NxLibItem item = stereo_node[itmLink][itmTarget];
 	int error;
 	std::string result = item.asString(&error);
 	return error ? "" : result;
@@ -293,7 +260,7 @@ boost::optional<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
 	if (getWorkspaceCalibrationFrame().empty()) return boost::none;
 
 	// convert from mm to m
-	Eigen::Isometry3d pose = toEigenIsometry(ensenso_camera[itmLink]);
+	Eigen::Isometry3d pose = toEigenIsometry(stereo_node[itmLink]);
 	pose.translation() *= 0.001;
 
 	return pose;
@@ -341,7 +308,7 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 	executeNx(calibrate);
 
 	// return result (camera pose, pattern pose, iterations, reprojection error)
-	Eigen::Isometry3d camera_pose  = toEigenIsometry(ensenso_camera[itmLink]).inverse(); // "Link" is inverted
+	Eigen::Isometry3d camera_pose  = toEigenIsometry(stereo_node[itmLink]).inverse(); // "Link" is inverted
 	Eigen::Isometry3d pattern_pose = toEigenIsometry(calibrate.result()[itmPatternPose]);
 	camera_pose.translation()  *= 0.001;
 	pattern_pose.translation() *= 0.001;
@@ -389,7 +356,7 @@ void Ensenso::clearWorkspaceCalibration(bool store) {
 	// clear target name
 	// TODO: Can be removed after settings the target parameter above?
 	// TODO: Should test that.
-	setNx(ensenso_camera[itmLink][itmTarget], "");
+	setNx(stereo_node[itmLink][itmTarget], "");
 
 	if (store) storeWorkspaceCalibration();
 }
