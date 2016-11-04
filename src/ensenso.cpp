@@ -15,7 +15,7 @@ Ensenso::Ensenso(std::string serial, bool connect_monocular) {
 	if (serial == "") {
 		// Try to find a stereo camera.
 		boost::optional<NxLibItem> camera = openCameraByType(valStereo);
-		if (!camera) throw std::runtime_error("Please connect an Ensenso stereo camera to your computer and make sure that the systemctl ueyeethd.service is running.");
+		if (!camera) throw std::runtime_error("Please connect an Ensenso stereo camera to your computer and make sure that the ueyeethd service is running.");
 		ensenso_camera = *camera;
 	} else {
 		// Open the requested camera.
