@@ -87,8 +87,16 @@ void Ensenso::setFlexView(int value) {
 	setNx(stereo_node[itmParameters][itmCapture][itmFlexView], value);
 }
 
+bool Ensenso::frontLight() {
+	return getNx<bool>(stereo_node[itmParameters][itmCapture][itmFrontLight]);
+}
+
 void Ensenso::setFrontLight(bool state) {
 	setNx(stereo_node[itmParameters][itmCapture][itmFrontLight], state);
+}
+
+bool Ensenso::projector() {
+	return getNx<bool>(stereo_node[itmParameters][itmCapture][itmProjector]);
 }
 
 void Ensenso::setProjector(bool state) {

@@ -82,8 +82,14 @@ public:
 	/// Sets the Ensenso camera FlexView value.
 	void setFlexView(int value);
 
+	/// Get the front light setting (on or off).
+	bool frontLight();
+
 	/// Sets the front light on or off.
 	void setFrontLight(bool state);
+
+	/// Get the projector setting (on or off).
+	bool projector();
 
 	/// Sets the projector on or off.
 	void setProjector(bool state);
