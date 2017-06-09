@@ -116,7 +116,11 @@ public:
 	bool retrieve(bool trigger = true, unsigned int timeout = 1500, bool stereo = true, bool monocular=true) const;
 
 	/// Rectifies the images.
-	void rectifyImages();
+	/**
+	 * \param stereo If true, rectify data from the stereo camera.
+	 * \param monocular If true, rectify data from the monocular camera.
+	 */
+	void rectifyImages(bool stereo, bool monocular);
 
 	/// Compute the disparity.
 	void computeDisparity();

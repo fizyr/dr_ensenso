@@ -150,9 +150,10 @@ bool Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, bool mon
 	return true;
 }
 
-void Ensenso::rectifyImages() {
+void Ensenso::rectifyImages(bool stereo, bool monocular) {
 	NxLibCommand command(cmdRectifyImages);
-	setNx(command.parameters()[itmCameras][0], serialNumber());
+	if (stereo) setNx(command.parameters()[itmCameras][0], serialNumber());
+	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], monocularSerialNumber());
 	executeNx(command);
 }
 
