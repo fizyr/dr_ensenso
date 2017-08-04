@@ -70,4 +70,10 @@ cv::Mat toProjectionMatrix(NxLibItem const & item, std::string const & camera, s
 	return result;
 }
 
+void toNxLibItem(NxLibItem const & item, cv::Mat const & value, std::string const & what) {
+	int error = 0;
+	item.setBinaryData(&error, value);
+	if (error) throw NxError(item, error, what);
+}
+
 }

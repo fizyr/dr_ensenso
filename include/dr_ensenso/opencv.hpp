@@ -39,5 +39,10 @@ cv::Mat toProjectionMatrix(NxLibItem const & item, std::string const & camera = 
  */
 cv::Mat toRectificationMatrix(NxLibItem const & item, std::string const & camera = "Left", std::string const & what = "");
 
+/// Copy data from a cv::Mat to an NxLibItem.
+/**
+ * \throw NxError on failure.
+ */
+void toNxLibItem(NxLibItem const & item, cv::Mat const & value, std::string const & what = "");
 
 }
