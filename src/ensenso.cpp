@@ -59,12 +59,12 @@ std::string Ensenso::monocularSerialNumber() const {
 }
 
 bool Ensenso::loadParameters(std::string const parameters_file) {
-	return setNxJsonFromFile(stereo_node[itmParameters], parameters_file);
+	return setNxJsonFromFile(stereo_node, parameters_file);
 }
 
 bool Ensenso::loadMonocularParameters(std::string const parameters_file) {
 	if (!monocular_node) throw std::runtime_error("No monocular camera found. Can not load monocular camara parameters.");
-	return setNxJsonFromFile(monocular_node.get()[itmParameters], parameters_file);
+	return setNxJsonFromFile(monocular_node.get(), parameters_file);
 }
 
 void Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
