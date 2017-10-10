@@ -373,6 +373,7 @@ void Ensenso::clearWorkspaceCalibration(bool store) {
 void Ensenso::storeWorkspaceCalibration() {
 	NxLibCommand command(cmdStoreCalibration);
 	setNx(command.parameters()[itmCameras][0], serialNumber());
+	setNx(command.parameters()[itmLink], true);
 	executeNx(command);
 }
 
