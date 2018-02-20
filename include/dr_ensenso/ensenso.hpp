@@ -8,7 +8,7 @@
 #include <pcl/point_types.h>
 
 #include <ensenso/nxLib.h>
-#include <boost/optional.hpp>
+#include <optional>
 
 namespace dr {
 
@@ -36,7 +36,7 @@ protected:
 	NxLibItem stereo_node;
 
 	/// The attached monocular camera node.
-	boost::optional<NxLibItem> monocular_node;
+	std::optional<NxLibItem> monocular_node;
 
 public:
 
@@ -52,7 +52,7 @@ public:
 	}
 
 	/// Get the native nxLibItem for the monocular camera (if any).
-	boost::optional<NxLibItem> nativeMonocular() const {
+	std::optional<NxLibItem> nativeMonocular() const {
 		return monocular_node;
 	}
 
@@ -179,7 +179,7 @@ public:
 	/**
 	 * \return The pose of the camera in the calibrated frame, if the camera is calibrated. Otherwise an empty optional.
 	 */
-	boost::optional<Eigen::Isometry3d> getWorkspaceCalibration();
+	std::optional<Eigen::Isometry3d> getWorkspaceCalibration();
 
 	/// Sets the active workspace calibration.
 	void setWorkspaceCalibration(
@@ -197,11 +197,11 @@ public:
 
 	/// Performs calibration using previously recorded calibration results and the corresponding robot poses.
 	CalibrationResult computeCalibration(
-		std::vector<Eigen::Isometry3d> const & robot_poses,            ///< Vector of robot poses corresponding to the stored calibration patterns.
-		bool camera_moving,                                            ///< If true, the camera is expected to be in hand. Otherwise the camera is expected to be fixed.
-		boost::optional<Eigen::Isometry3d> const & camera_guess = {},  ///< Initial guess for the camera relative to the hand (camera in hand) or camera relative to robot base (camera fixed). Not necessary, but speeds up calibration.
-		boost::optional<Eigen::Isometry3d> const & pattern_guess = {}, ///< Initial guess for the pattern relative to the hand (camera in hand) or pattern relative to robot base (camera fixed). Not necessary, but speeds up calibration.
-		std::string const & target = ""                                ///< Target frame to calibrate to. Default is "Hand" for camera in hand and "Workspace" for fixed camera.
+		std::vector<Eigen::Isometry3d> const & robot_poses,          ///< Vector of robot poses corresponding to the stored calibration patterns.
+		bool camera_moving,                                          ///< If true, the camera is expected to be in hand. Otherwise the camera is expected to be fixed.
+		std::optional<Eigen::Isometry3d> const & camera_guess = {},  ///< Initial guess for the camera relative to the hand (camera in hand) or camera relative to robot base (camera fixed). Not necessary, but speeds up calibration.
+		std::optional<Eigen::Isometry3d> const & pattern_guess = {}, ///< Initial guess for the pattern relative to the hand (camera in hand) or pattern relative to robot base (camera fixed). Not necessary, but speeds up calibration.
+		std::string const & target = ""                              ///< Target frame to calibrate to. Default is "Hand" for camera in hand and "Workspace" for fixed camera.
 	);
 
 };

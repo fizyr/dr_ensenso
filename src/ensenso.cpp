@@ -8,7 +8,7 @@
 
 namespace dr {
 
-NxLibItem imageNode(NxLibItem stereo, boost::optional<NxLibItem> monocular, ImageType type) {
+NxLibItem imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular, ImageType type) {
 	switch (type) {
 		case ImageType::stereo_raw_left:             return stereo[itmImages][itmRaw][itmLeft];
 		case ImageType::stereo_raw_right:            return stereo[itmImages][itmRaw][itmRight];
@@ -28,12 +28,12 @@ Ensenso::Ensenso(std::string serial, bool connect_monocular) {
 
 	if (serial == "") {
 		// Try to find a stereo camera.
-		boost::optional<NxLibItem> camera = openCameraByType(valStereo);
+		std::optional<NxLibItem> camera = openCameraByType(valStereo);
 		if (!camera) throw std::runtime_error("Failed to open any Ensenso camera.");
 		stereo_node = *camera;
 	} else {
 		// Open the requested camera.
-		boost::optional<NxLibItem> camera = openCameraBySerial(serial);
+		std::optional<NxLibItem> camera = openCameraBySerial(serial);
 		if (!camera) throw std::runtime_error("Could not open an Ensenso camera with serial " + serial + ".");
 		stereo_node = *camera;
 	}
@@ -55,7 +55,7 @@ std::string Ensenso::serialNumber() const {
 }
 
 std::string Ensenso::monocularSerialNumber() const {
-	return monocular_node ? getNx<std::string>(monocular_node.get()[itmSerialNumber]) : "";
+	return monocular_node ? getNx<std::string>(monocular_node.value()[itmSerialNumber]) : "";
 }
 
 bool Ensenso::loadParameters(std::string const parameters_file) {
@@ -64,7 +64,7 @@ bool Ensenso::loadParameters(std::string const parameters_file) {
 
 bool Ensenso::loadMonocularParameters(std::string const parameters_file) {
 	if (!monocular_node) throw std::runtime_error("No monocular camera found. Can not load monocular camara parameters.");
-	return setNxJsonFromFile(monocular_node.get(), parameters_file);
+	return setNxJsonFromFile(monocular_node.value(), parameters_file);
 }
 
 void Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
@@ -124,7 +124,7 @@ bool Ensenso::trigger(bool stereo, bool monocular) const {
 
 	NxLibCommand command(cmdTrigger);
 	if (stereo) setNx(command.parameters()[itmCameras][0], serialNumber());
-	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_node.get()[itmSerialNumber]));
+	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_node.value()[itmSerialNumber]));
 	executeNx(command);
 
 	if (stereo && !getNx<bool>(command.result()[serialNumber()][itmTriggered])) return false;
@@ -142,7 +142,7 @@ bool Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, bool mon
 	NxLibCommand command(trigger ? cmdCapture : cmdRetrieve);
 	setNx(command.parameters()[itmTimeout], int(timeout));
 	if (stereo) setNx(command.parameters()[itmCameras][0], serialNumber());
-	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_node.get()[itmSerialNumber]));
+	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_node.value()[itmSerialNumber]));
 	executeNx(command);
 
 	if (stereo && !getNx<bool>(command.result()[serialNumber()][itmRetrieved])) return false;
@@ -247,7 +247,7 @@ Eigen::Isometry3d Ensenso::detectCalibrationPattern(int const samples, bool igno
 
 	// Transform back to left stereo lens.
 	if (ignore_calibration) {
-		boost::optional<Eigen::Isometry3d> camera_pose = getWorkspaceCalibration();
+		std::optional<Eigen::Isometry3d> camera_pose = getWorkspaceCalibration();
 		if (camera_pose) {
 			result = *camera_pose * result;
 		}
@@ -264,9 +264,9 @@ std::string Ensenso::getWorkspaceCalibrationFrame() {
 	return error ? "" : result;
 }
 
-boost::optional<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
+std::optional<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
 	// Check if the camera is calibrated.
-	if (getWorkspaceCalibrationFrame().empty()) return boost::none;
+	if (getWorkspaceCalibrationFrame().empty()) return std::nullopt;
 
 	// convert from mm to m
 	Eigen::Isometry3d pose = toEigenIsometry(stereo_node[itmLink]);
@@ -278,8 +278,8 @@ boost::optional<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
 Ensenso::CalibrationResult Ensenso::computeCalibration(
 	std::vector<Eigen::Isometry3d> const & robot_poses,
 	bool moving,
-	boost::optional<Eigen::Isometry3d> const & camera_guess,
-	boost::optional<Eigen::Isometry3d> const & pattern_guess,
+	std::optional<Eigen::Isometry3d> const & camera_guess,
+	std::optional<Eigen::Isometry3d> const & pattern_guess,
 	std::string const & target
 ) {
 	NxLibCommand calibrate(cmdCalibrateHandEye);

@@ -3,23 +3,22 @@
 
 #include <ensenso/nxLib.h>
 
-#include <boost/optional.hpp>
-
-#include <string>
-#include <stdexcept>
 #include <cstdint>
+#include <optional>
+#include <stdexcept>
+#include <string>
 
 
 namespace dr {
 
 /// Find a camera by serial number.
-boost::optional<NxLibItem> findCameraBySerial(std::string const & serial);
+std::optional<NxLibItem> findCameraBySerial(std::string const & serial);
 
 /// Find a camera by eeprom ID.
-boost::optional<NxLibItem> findCameraByEepromId(int eeprom_id);
+std::optional<NxLibItem> findCameraByEepromId(int eeprom_id);
 
 /// Find a camera that is linked to another camera given by serial.
-boost::optional<NxLibItem> findCameraByLink(std::string const & serial);
+std::optional<NxLibItem> findCameraByLink(std::string const & serial);
 
 /// Find a camera by type.
 /**
@@ -27,28 +26,28 @@ boost::optional<NxLibItem> findCameraByLink(std::string const & serial);
  *
  * \return An NxLibItem representing a camera of the requested type if one can be found.
  */
-boost::optional<NxLibItem> findCameraByType(std::string const & type);
+std::optional<NxLibItem> findCameraByType(std::string const & type);
 
 /// Find and open a camera by serial number.
 /**
  * \return The NxLibItem representing the found camera or an empty optional.
  * \throws if opening the camera fails.
  */
-boost::optional<NxLibItem> openCameraBySerial(std::string const & serial);
+std::optional<NxLibItem> openCameraBySerial(std::string const & serial);
 
 /// Find and open a camera by eeprom ID.
 /**
  * \return The NxLibItem representing the found camera or an empty optional.
  * \throws if opening the camera fails.
  */
-boost::optional<NxLibItem> openCameraByEepromId(int eeprom_id);
+std::optional<NxLibItem> openCameraByEepromId(int eeprom_id);
 
 /// Find and open a camera that is linked to another camera given by serial.
 /**
  * \return The NxLibItem representing the found camera or an empty optional.
  * \throws if opening the camera fails.
  */
-boost::optional<NxLibItem> openCameraByLink(std::string const & serial);
+std::optional<NxLibItem> openCameraByLink(std::string const & serial);
 
 /// Find and open a camera by type.
 /**
@@ -56,7 +55,7 @@ boost::optional<NxLibItem> openCameraByLink(std::string const & serial);
  * \return An NxLibItem representing a camera of the requested type if one can be found.
  * \throws if opening the camera fails.
  */
-boost::optional<NxLibItem> openCameraByType(std::string const & type);
+std::optional<NxLibItem> openCameraByType(std::string const & type);
 
 /// Execute an NxLibCommand.
 /**
