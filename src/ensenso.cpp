@@ -87,8 +87,14 @@ void Ensenso::setFlexView(int value) {
 	setNx(stereo_node[itmParameters][itmCapture][itmFlexView], value);
 }
 
-bool Ensenso::frontLight() {
-	return getNx<bool>(stereo_node[itmParameters][itmCapture][itmFrontLight]);
+bool Ensenso::hasFrontLight() const {
+	return stereo_node[itmParameters][itmCapture][itmFrontLight].exists();
+}
+
+std::optional<bool> Ensenso::frontLight() {
+	NxLibItem item = stereo_node[itmParameters][itmCapture][itmFrontLight];
+	if (!item.exists()) return std::nullopt;
+	return getNx<bool>(item);
 }
 
 void Ensenso::setFrontLight(bool state) {
@@ -202,11 +208,11 @@ void Ensenso::recordCalibrationPattern() {
 
 	// Capture image with front-light.
 	setProjector(false);
-	setFrontLight(true);
+	if (hasFrontLight()) setFrontLight(true);
 
 	retrieve(true, 1500, true, false);
 
-	setFrontLight(false);
+	if (hasFrontLight()) setFrontLight(false);
 	setProjector(true);
 
 	// Find the pattern.

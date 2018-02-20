@@ -82,8 +82,11 @@ public:
 	/// Sets the Ensenso camera FlexView value.
 	void setFlexView(int value);
 
+	/// Check if the camera has a front light.
+	bool hasFrontLight() const;
+
 	/// Get the front light setting (on or off).
-	bool frontLight();
+	std::optional<bool> frontLight();
 
 	/// Sets the front light on or off.
 	void setFrontLight(bool state);
