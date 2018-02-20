@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.8)
 project(dr_ensenso)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+add_compile_options(-Wall -Wextra -Wpedantic)
 
 find_package(catkin REQUIRED COMPONENTS
 	roscpp
-	dr_base
 	pcl_ros
 	pcl_conversions
 	cmake_modules
@@ -24,11 +29,11 @@ catkin_package(
 	CATKIN_DEPENDS
 )
 
-dr_include_directories(
-	include/${PROJECT_NAME}
+include_directories(SYSTEM
 	${catkin_INCLUDE_DIRS}
 	${SYSTEM_INCLUDE_DIRS}
 )
+include_directories(include/${PROJECT_NAME})
 
 add_library(${PROJECT_NAME}
 	src/eigen.cpp
