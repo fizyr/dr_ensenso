@@ -7,7 +7,7 @@ namespace dr {
 
 namespace {
 	/// Conversion from ensenso timestamp to PCL timestamp.
-	pcl::uint64_t ensensoStampToPcl(double stamp) { return (stamp - 11644473600.0) * 1000000.0; };
+	pcl::uint64_t ensensoStampToPcl(double stamp) { return (stamp - 11644473600.0) * 1000000.0; }
 }
 
 pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, std::string const & what) {
