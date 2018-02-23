@@ -20,7 +20,9 @@ std::optional<NxLibItem> findCameraByEepromId(int eeprom_id) {
 std::optional<NxLibItem> findCameraByLink(std::string const & serial) {
 	NxLibItem cameras = NxLibItem{}[itmCameras][itmBySerialNo];
 	for (int i = 0; i < cameras.count(); ++i) {
-		if (getNx<std::string>(cameras[i][itmLink][itmTarget]) == serial) return cameras[i];
+		NxLibItem link_target = cameras[i][itmLink][itmTarget];
+		if (!link_target.exists()) continue;
+		if (getNx<std::string>(link_target) == serial) return cameras[i];
 	}
 	return {};
 }
