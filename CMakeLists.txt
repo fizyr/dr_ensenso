@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	pcl_ros
 	pcl_conversions
-	cmake_modules
 )
 
 find_package(Ensenso REQUIRED)
