@@ -18,8 +18,12 @@ find_package(Boost REQUIRED COMPONENTS filesystem date_time chrono)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
-SET(SYSTEM_LIBRARIES    ${Ensenso_LIBRARIES}    ${Boost_LIBRARIES}    ${EIGEN3_LIBRARIES}    ${OpenCV_LIBRARIES})
-SET(SYSTEM_INCLUDE_DIRS ${Ensenso_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+SET(SYSTEM_LIBRARIES
+	${Ensenso_LIBRARIES}
+	${Boost_LIBRARIES}
+	${EIGEN3_LIBRARIES}
+	${OpenCV_LIBRARIES}
+)
 
 catkin_package(
 	INCLUDE_DIRS include
@@ -30,7 +34,10 @@ catkin_package(
 
 include_directories(SYSTEM
 	${catkin_INCLUDE_DIRS}
-	${SYSTEM_INCLUDE_DIRS}
+	${Ensenso_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIRS}
+	${EIGEN3_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
 )
 include_directories(include/${PROJECT_NAME})
 
@@ -42,7 +49,14 @@ add_library(${PROJECT_NAME}
 	src/pcl.cpp
 	src/util.cpp
 )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${SYSTEM_LIBRARIES})
+
+target_link_libraries(${PROJECT_NAME}
+	${catkin_LIBRARIES}
+	${Ensenso_LIBRARIES}
+	${Boost_LIBRARIES}
+	${EIGEN3_LIBRARIES}
+	${OpenCV_LIBRARIES}
+)
 
 install(
 	TARGETS "${PROJECT_NAME}"
