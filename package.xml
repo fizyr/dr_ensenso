@@ -14,5 +14,4 @@
 	<depend>pcl_ros</depend>
 	<depend>eigen</depend>
 	<depend>libopencv-dev</depend>
-	<depend>pcl</depend>
 </package>
