@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
 	<name>dr_ensenso</name>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<description>The dr_ensenso package</description>
 
 	<maintainer email="j.c.gaiser@delftrobotics.com">Hans Gaiser</maintainer>
