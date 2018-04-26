@@ -39,6 +39,21 @@ protected:
 	std::optional<NxLibItem> monocular_node;
 
 public:
+	constexpr static bool needMonocular(ImageType image) {
+		switch (image) {
+			case ImageType::monocular_raw:
+			case ImageType::monocular_rectified:
+			case ImageType::monocular_overlay:
+				return true;
+			case ImageType::stereo_raw_left:
+			case ImageType::stereo_raw_right:
+			case ImageType::stereo_rectified_left:
+			case ImageType::stereo_rectified_right:
+			case ImageType::disparity:
+				return false;
+		}
+		return false;
+	}
 
 	/// Connect to an ensenso camera.
 	Ensenso(std::string serial = "", bool connect_monocular = true);
