@@ -46,6 +46,7 @@ Ensenso::Ensenso(std::string serial, bool connect_monocular) {
 }
 
 Ensenso::~Ensenso() {
+	if (moved_) return;
 	executeNx(NxLibCommand(cmdClose));
 	nxLibFinalize();
 }

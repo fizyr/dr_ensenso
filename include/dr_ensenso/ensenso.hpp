@@ -6,6 +6,7 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <estd/utility/move_marker.hpp>
 
 #include <ensenso/nxLib.h>
 #include <optional>
@@ -38,6 +39,9 @@ protected:
 	/// The attached monocular camera node.
 	std::optional<NxLibItem> monocular_node;
 
+	/// Marker to detect when we've been moved.
+	estd::move_marker moved_;
+
 public:
 	constexpr static bool needMonocular(ImageType image) {
 		switch (image) {
@@ -57,6 +61,12 @@ public:
 
 	/// Connect to an ensenso camera.
 	Ensenso(std::string serial = "", bool connect_monocular = true);
+
+	/// Explicitly opt-in to default move semantics.
+	Ensenso(Ensenso &&)       = default;
+	Ensenso(Ensenso const &)  = delete;
+	Ensenso & operator=(Ensenso      &&) = default;
+	Ensenso & operator=(Ensenso const &) = delete;
 
 	/// Destructor.
 	~Ensenso();
