@@ -24,6 +24,25 @@ enum class ImageType {
 	monocular_overlay,
 };
 
+class NxLibInitGuard {
+private:
+	bool moved_ = false;
+
+public:
+	NxLibInitGuard();
+	NxLibInitGuard(NxLibInitGuard const &) = delete;
+	NxLibInitGuard(NxLibInitGuard &&);
+	NxLibInitGuard& operator=(NxLibInitGuard const &) = delete;
+	NxLibInitGuard& operator=(NxLibInitGuard &&);
+	~NxLibInitGuard();
+};
+
+using NxLibInitToken = std::shared_ptr<NxLibInitGuard>;
+
+inline NxLibInitToken initNxLib() {
+	return std::make_shared<NxLibInitGuard>();
+}
+
 class Ensenso {
 public:
 	/// Ensenso calibration result (camera pose, pattern pose, iterations needed, reprojection error).
@@ -39,8 +58,8 @@ protected:
 	/// The attached monocular camera node.
 	std::optional<NxLibItem> monocular_node;
 
-	/// Marker to detect when we've been moved.
-	estd::move_marker moved_;
+	/// Initializtion token to allow refcounted initialization of NxLib.
+	NxLibInitToken init_token_;
 
 public:
 	constexpr static bool needMonocular(ImageType image) {
@@ -60,7 +79,7 @@ public:
 	}
 
 	/// Connect to an ensenso camera.
-	Ensenso(std::string serial = "", bool connect_monocular = true);
+	Ensenso(std::string serial = "", bool connect_monocular = true, NxLibInitToken init_token = initNxLib());
 
 	/// Explicitly opt-in to default move semantics.
 	Ensenso(Ensenso &&)       = default;
