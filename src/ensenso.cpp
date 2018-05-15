@@ -89,6 +89,10 @@ void Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
 	executeNx(command);
 }
 
+bool Ensenso::hasFlexView() const {
+	return stereo_node[itmParameters][itmCapture][itmFlexView].exists();
+}
+
 int Ensenso::flexView() const {
 	try {
 		// in case FlexView = false, getting the int value gives an error

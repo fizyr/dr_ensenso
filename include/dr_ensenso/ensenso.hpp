@@ -120,6 +120,9 @@ public:
 	/// Loads the monocular camera uEye parameters from a INI file. Returns false if file was not found.
 	void loadMonocularUeyeParameters(std::string const parameters_file);
 
+	/// Check if the camera has a FlexView parameter.
+	bool hasFlexView() const;
+
 	/// Returns the current FlexView value. If disabled, returns -1.
 	int flexView() const;
 
