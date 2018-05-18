@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 find_package(catkin REQUIRED COMPONENTS
+	estd
 	roscpp
 	pcl_ros
 	pcl_conversions
@@ -29,7 +30,7 @@ catkin_package(
 	INCLUDE_DIRS include
 	LIBRARIES ${PROJECT_NAME}
 	DEPENDS Ensenso Boost EIGEN3 OpenCV
-	CATKIN_DEPENDS pcl_ros
+	CATKIN_DEPENDS pcl_ros estd
 )
 
 include_directories(SYSTEM

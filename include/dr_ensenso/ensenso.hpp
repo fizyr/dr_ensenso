@@ -6,6 +6,7 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <estd/utility/move_marker.hpp>
 
 #include <ensenso/nxLib.h>
 #include <optional>
@@ -23,6 +24,25 @@ enum class ImageType {
 	monocular_overlay,
 };
 
+class NxLibInitGuard {
+private:
+	bool moved_ = false;
+
+public:
+	NxLibInitGuard();
+	NxLibInitGuard(NxLibInitGuard const &) = delete;
+	NxLibInitGuard(NxLibInitGuard &&);
+	NxLibInitGuard& operator=(NxLibInitGuard const &) = delete;
+	NxLibInitGuard& operator=(NxLibInitGuard &&);
+	~NxLibInitGuard();
+};
+
+using NxLibInitToken = std::shared_ptr<NxLibInitGuard>;
+
+inline NxLibInitToken initNxLib() {
+	return std::make_shared<NxLibInitGuard>();
+}
+
 class Ensenso {
 public:
 	/// Ensenso calibration result (camera pose, pattern pose, iterations needed, reprojection error).
@@ -38,10 +58,34 @@ protected:
 	/// The attached monocular camera node.
 	std::optional<NxLibItem> monocular_node;
 
+	/// Initializtion token to allow refcounted initialization of NxLib.
+	NxLibInitToken init_token_;
+
 public:
+	constexpr static bool needMonocular(ImageType image) {
+		switch (image) {
+			case ImageType::monocular_raw:
+			case ImageType::monocular_rectified:
+			case ImageType::monocular_overlay:
+				return true;
+			case ImageType::stereo_raw_left:
+			case ImageType::stereo_raw_right:
+			case ImageType::stereo_rectified_left:
+			case ImageType::stereo_rectified_right:
+			case ImageType::disparity:
+				return false;
+		}
+		return false;
+	}
 
 	/// Connect to an ensenso camera.
-	Ensenso(std::string serial = "", bool connect_monocular = true);
+	Ensenso(std::string serial = "", bool connect_monocular = true, NxLibInitToken init_token = initNxLib());
+
+	/// Explicitly opt-in to default move semantics.
+	Ensenso(Ensenso &&)       = default;
+	Ensenso(Ensenso const &)  = delete;
+	Ensenso & operator=(Ensenso      &&) = default;
+	Ensenso & operator=(Ensenso const &) = delete;
 
 	/// Destructor.
 	~Ensenso();
@@ -75,6 +119,9 @@ public:
 
 	/// Loads the monocular camera uEye parameters from a INI file. Returns false if file was not found.
 	void loadMonocularUeyeParameters(std::string const parameters_file);
+
+	/// Check if the camera has a FlexView parameter.
+	bool hasFlexView() const;
 
 	/// Returns the current FlexView value. If disabled, returns -1.
 	int flexView() const;

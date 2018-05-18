@@ -8,6 +8,23 @@
 
 namespace dr {
 
+NxLibInitGuard::NxLibInitGuard() {
+	nxLibInitialize();
+}
+
+NxLibInitGuard::~NxLibInitGuard() {
+	if (!moved_) nxLibFinalize();
+}
+
+NxLibInitGuard::NxLibInitGuard(NxLibInitGuard && other) {
+	other.moved_ = true;
+}
+
+NxLibInitGuard & NxLibInitGuard::operator=(NxLibInitGuard && other) {
+	other.moved_ = true;
+	return *this;
+}
+
 NxLibItem imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular, ImageType type) {
 	switch (type) {
 		case ImageType::stereo_raw_left:             return stereo[itmImages][itmRaw][itmLeft];
@@ -22,10 +39,7 @@ NxLibItem imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular, ImageT
 	throw std::runtime_error("Failed to get image node: unknown image type: " + std::to_string(int(type)));
 }
 
-Ensenso::Ensenso(std::string serial, bool connect_monocular) {
-	// Initialize nxLib.
-	nxLibInitialize();
-
+Ensenso::Ensenso(std::string serial, bool connect_monocular, NxLibInitToken token) : init_token_{std::move(token)} {
 	if (serial == "") {
 		// Try to find a stereo camera.
 		std::optional<NxLibItem> camera = openCameraByType(valStereo);
@@ -40,14 +54,15 @@ Ensenso::Ensenso(std::string serial, bool connect_monocular) {
 
 	// Get the linked monocular camera.
 	if (connect_monocular) {
+		std::clog << "Ensenso::Ensenso 3\n";
 		monocular_node = openCameraByLink(serialNumber());
 		if (!monocular_node) throw std::runtime_error("Failed to open linked monocular camera.");
 	}
 }
 
 Ensenso::~Ensenso() {
+	if (!init_token_) return;
 	executeNx(NxLibCommand(cmdClose));
-	nxLibFinalize();
 }
 
 std::string Ensenso::serialNumber() const {
@@ -76,6 +91,10 @@ void Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
 	NxLibCommand command(cmdLoadUEyeParameterSet);
 	setNx(command.parameters()[itmFilename], parameters_file);
 	executeNx(command);
+}
+
+bool Ensenso::hasFlexView() const {
+	return stereo_node[itmParameters][itmCapture][itmFlexView].exists();
 }
 
 int Ensenso::flexView() const {
