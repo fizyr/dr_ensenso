@@ -58,8 +58,12 @@ std::string Ensenso::monocularSerialNumber() const {
 	return monocular_node ? getNx<std::string>(monocular_node.value()[itmSerialNumber]) : "";
 }
 
-bool Ensenso::loadParameters(std::string const parameters_file) {
-	return setNxJsonFromFile(stereo_node, parameters_file);
+bool Ensenso::loadParameters(std::string const parameters_file, bool entire_tree) {
+	if (entire_tree) {
+		return setNxJsonFromFile(stereo_node, parameters_file);
+	} else {
+		return setNxJsonFromFile(stereo_node[itmParameters], parameters_file);
+	}
 }
 
 bool Ensenso::loadMonocularParameters(std::string const parameters_file) {
