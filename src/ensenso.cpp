@@ -54,7 +54,6 @@ Ensenso::Ensenso(std::string serial, bool connect_monocular, NxLibInitToken toke
 
 	// Get the linked monocular camera.
 	if (connect_monocular) {
-		std::clog << "Ensenso::Ensenso 3\n";
 		monocular_node = openCameraByLink(serialNumber());
 		if (!monocular_node) throw std::runtime_error("Failed to open linked monocular camera.");
 	}
