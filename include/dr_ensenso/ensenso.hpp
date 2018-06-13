@@ -251,9 +251,8 @@ public:
 		std::string const & target = ""                              ///< Target frame to calibrate to. Default is "Hand" for camera in hand and "Workspace" for fixed camera.
 	);
 
-	Eigen::Isometry3d getStereoLink();
-
-	Eigen::Isometry3d getMonocularLink();
+	/// Returns the calibration between ueye and ensenso.
+	Eigen::Isometry3d getMonocularLink() const;
 };
 
 }

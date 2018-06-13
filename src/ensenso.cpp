@@ -398,13 +398,13 @@ void Ensenso::storeWorkspaceCalibration() {
 	executeNx(command);
 }
 
-Eigen::Isometry3d Ensenso::getStereoLink(){
-	return toEigenIsometry(stereo_node[itmLink]);
-}
 
+Eigen::Isometry3d Ensenso::getMonocularLink() const {
+	// convert from mm to m
+	Eigen::Isometry3d pose = toEigenIsometry(monocular_node.value()[itmLink]);
+	pose.translation() *= 0.001;
 
-Eigen::Isometry3d Ensenso::getMonocularLink(){
-	return toEigenIsometry(monocular_node.value()[itmLink]);
+	return pose;
 }
 
 }
