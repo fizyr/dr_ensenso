@@ -9,7 +9,11 @@
 namespace dr {
 
 NxLibInitGuard::NxLibInitGuard() {
-	nxLibInitialize();
+	try {
+		nxLibInitialize();
+	} catch (NxLibException const & e) {
+		throw NxError(e);
+	}
 }
 
 NxLibInitGuard::~NxLibInitGuard() {
