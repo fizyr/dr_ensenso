@@ -5,6 +5,9 @@
 #include "pcl.hpp"
 
 #include <stdexcept>
+#include <fstream>
+
+#include <json/json.h>
 
 namespace dr {
 
@@ -77,11 +80,35 @@ std::string Ensenso::monocularSerialNumber() const {
 }
 
 bool Ensenso::loadParameters(std::string const parameters_file, bool entire_tree) {
-	if (entire_tree) {
-		return setNxJsonFromFile(stereo_node, parameters_file);
-	} else {
-		return setNxJsonFromFile(stereo_node[itmParameters], parameters_file);
+	std::ifstream file;
+	file.open(parameters_file);
+
+	if (!file.good()) {
+		return false;
 	}
+
+	file.exceptions(std::ios::failbit | std::ios::badbit);
+
+	Json::Value root;
+	file >> root;
+
+	if (entire_tree) {
+		if (!root.isMember("Parameters")) {
+			// Requested to load an entire tree, but the input did not contain an entire tree.
+			return false;
+		}
+
+		setNxJson(stereo_node, Json::writeString(Json::StreamWriterBuilder(), root));
+	} else {
+		if (root.isMember("Parameters")) {
+			// Input was a complete tree, select only the parameters subtree.
+			root = root["Parameters"];
+		}
+
+		setNxJson(stereo_node[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
+	}
+
+	return true;
 }
 
 bool Ensenso::loadMonocularParameters(std::string const parameters_file) {

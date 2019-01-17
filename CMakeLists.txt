@@ -17,18 +17,12 @@ find_package(Ensenso REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem date_time chrono)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
-
-SET(SYSTEM_LIBRARIES
-	${Ensenso_LIBRARIES}
-	${Boost_LIBRARIES}
-	${EIGEN3_LIBRARIES}
-	${OpenCV_LIBRARIES}
-)
+find_package(jsoncpp REQUIRED)
 
 catkin_package(
 	INCLUDE_DIRS include
 	LIBRARIES ${PROJECT_NAME}
-	DEPENDS Ensenso Boost EIGEN3 OpenCV
+	DEPENDS Ensenso Boost EIGEN3 OpenCV jsoncpp
 	CATKIN_DEPENDS dr_pcl estd
 )
 
@@ -38,6 +32,7 @@ include_directories(SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIRS}
+	${jsoncpp_INCLUDE_DIRS}
 )
 include_directories(include/${PROJECT_NAME})
 
@@ -56,6 +51,7 @@ target_link_libraries(${PROJECT_NAME}
 	${Boost_LIBRARIES}
 	${EIGEN3_LIBRARIES}
 	${OpenCV_LIBRARIES}
+	${jsoncpp_LIBRARIES}
 )
 
 install(
