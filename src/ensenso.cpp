@@ -385,7 +385,7 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 		camera_pose,
 		pattern_pose,
 		getNx<int>(calibrate.result()[itmIterations]),
-		getNx<double>(calibrate.result()[itmReprojectionError])
+		getNx<double>(calibrate.result()[itmResidual])
 	};
 }
 

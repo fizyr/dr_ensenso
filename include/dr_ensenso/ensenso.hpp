@@ -45,7 +45,7 @@ inline NxLibInitToken initNxLib() {
 
 class Ensenso {
 public:
-	/// Ensenso calibration result (camera pose, pattern pose, iterations needed, reprojection error).
+	/// Ensenso calibration result (camera pose, pattern pose, iterations needed, residual error).
 	using CalibrationResult = std::tuple<Eigen::Isometry3d, Eigen::Isometry3d, int, double>;
 
 protected:
