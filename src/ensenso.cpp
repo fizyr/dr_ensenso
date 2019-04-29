@@ -111,9 +111,38 @@ bool Ensenso::loadParameters(std::string const parameters_file, bool entire_tree
 	return true;
 }
 
-bool Ensenso::loadMonocularParameters(std::string const parameters_file) {
+bool Ensenso::loadMonocularParameters(std::string const parameters_file, bool entire_tree) {
 	if (!monocular_node) throw std::runtime_error("No monocular camera found. Can not load monocular camara parameters.");
-	return setNxJsonFromFile(monocular_node.value(), parameters_file);
+
+	std::ifstream file;
+	file.open(parameters_file);
+
+	if (!file.good()) {
+		return false;
+	}
+
+	file.exceptions(std::ios::failbit | std::ios::badbit);
+
+	Json::Value root;
+	file >> root;
+
+	if (entire_tree) {
+		if (!root.isMember("Parameters")) {
+			// Requested to load an entire tree, but the input did not contain an entire tree.
+			return false;
+		}
+
+		setNxJson(monocular_node.value(), Json::writeString(Json::StreamWriterBuilder(), root));
+	} else {
+		if (root.isMember("Parameters")) {
+			// Input was a complete tree, select only the parameters subtree.
+			root = root["Parameters"];
+		}
+
+		setNxJson(monocular_node.value()[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
+	}
+
+	return true;
 }
 
 void Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {

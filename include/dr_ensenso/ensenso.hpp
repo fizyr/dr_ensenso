@@ -115,7 +115,7 @@ public:
 	bool loadParameters(std::string const parameters_file, bool entire_tree = false);
 
 	/// Loads the monocular camera parameters from a JSON file. Returns false if file was not found.
-	bool loadMonocularParameters(std::string const parameters_file);
+	bool loadMonocularParameters(std::string const parameters_file, bool entire_tree = false);
 
 	/// Loads the monocular camera uEye parameters from a INI file. Returns false if file was not found.
 	void loadMonocularUeyeParameters(std::string const parameters_file);
