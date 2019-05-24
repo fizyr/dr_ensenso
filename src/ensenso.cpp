@@ -283,7 +283,7 @@ void Ensenso::discardCalibrationPatterns() {
 	executeNx(NxLibCommand(cmdDiscardPatterns));
 }
 
-void Ensenso::recordCalibrationPattern() {
+void Ensenso::recordCalibrationPattern(std::string * command) {
 	// disable FlexView
 	int flex_view = flexView();
 	if (flex_view > 0) setFlexView(0);
@@ -302,12 +302,18 @@ void Ensenso::recordCalibrationPattern() {
 	setNx(command_collect_pattern.parameters()[itmCameras], serialNumber());
 	setNx(command_collect_pattern.parameters()[itmDecodeData], true);
 
+	// Set persistent parameters for debugging.
+	setNx(command_collect_pattern.commandItem[itmDefault][itmPersistentParameters], true);
+
 	executeNx(command_collect_pattern);
 
 	// restore FlexView setting
 	if (flex_view > 0) {
 		setFlexView(flex_view);
 	}
+
+	// Optionally copy the result for debugging.
+	if (command) *command = command_collect_pattern.commandItem.asJson(true);
 }
 
 Eigen::Isometry3d Ensenso::detectCalibrationPattern(int const samples, bool ignore_calibration)  {
@@ -368,7 +374,8 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 	bool moving,
 	std::optional<Eigen::Isometry3d> const & camera_guess,
 	std::optional<Eigen::Isometry3d> const & pattern_guess,
-	std::string const & target
+	std::string const & target,
+	std::string * command
 ) {
 	NxLibCommand calibrate(cmdCalibrateHandEye);
 
@@ -401,6 +408,9 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 		setNx(calibrate.parameters()[itmTransformations][i], scaled_robot_pose);
 	}
 
+	// Set persistent parameters for debugging.
+	setNx(calibrate.commandItem[itmDefault][itmPersistentParameters], true);
+
 	// execute calibration command
 	executeNx(calibrate);
 
@@ -409,6 +419,9 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 	Eigen::Isometry3d pattern_pose = toEigenIsometry(calibrate.result()[itmPatternPose]);
 	camera_pose.translation()  *= 0.001;
 	pattern_pose.translation() *= 0.001;
+
+	// Optionally copy the command for debugging.
+	if (command) *command = calibrate.commandItem.asJson(true);
 
 	return Ensenso::CalibrationResult{
 		camera_pose,
