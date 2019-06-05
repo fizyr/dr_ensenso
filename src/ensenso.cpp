@@ -305,7 +305,12 @@ void Ensenso::recordCalibrationPattern(std::string * command_dump_info) {
 	// Set persistent parameters for debugging.
 	setNx(command_collect_pattern.commandItem[itmDefault][itmPersistentParameters], true);
 
-	executeNx(command_collect_pattern);
+	try {
+		executeNx(command_collect_pattern);
+	} catch (std::runtime_error const & e) {
+		if (command_dump_info) *command_dump_info = command_collect_pattern.commandItem.asJson(true);
+		throw;
+	}
 
 	// restore FlexView setting
 	if (flex_view > 0) {
@@ -411,8 +416,14 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 	// Set persistent parameters for debugging.
 	setNx(calibrate.commandItem[itmDefault][itmPersistentParameters], true);
 
-	// execute calibration command
-	executeNx(calibrate);
+	try {
+		// execute calibration command
+		executeNx(calibrate);
+	} catch (std::runtime_error const & e) {
+		// Optionally copy the command for debugging.
+		if (command_dump_info) *command_dump_info = calibrate.commandItem.asJson(true);
+		throw;
+	}
 
 	// return result (camera pose, pattern pose, iterations, reprojection error)
 	Eigen::Isometry3d camera_pose  = toEigenIsometry(stereo_node[itmLink]).inverse(); // "Link" is inverted
