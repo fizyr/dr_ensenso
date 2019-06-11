@@ -307,7 +307,7 @@ void Ensenso::recordCalibrationPattern(std::string * command_dump_info) {
 
 	try {
 		executeNx(command_collect_pattern);
-	} catch (std::runtime_error const & e) {
+	} catch (std::exception const & e) {
 		if (command_dump_info) *command_dump_info = command_collect_pattern.commandItem.asJson(true);
 		throw;
 	}
@@ -419,7 +419,7 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 	try {
 		// execute calibration command
 		executeNx(calibrate);
-	} catch (std::runtime_error const & e) {
+	} catch (std::exception const & e) {
 		// Optionally copy the command for debugging.
 		if (command_dump_info) *command_dump_info = calibrate.commandItem.asJson(true);
 		throw;
