@@ -283,7 +283,7 @@ void Ensenso::discardCalibrationPatterns() {
 	executeNx(NxLibCommand(cmdDiscardPatterns));
 }
 
-void Ensenso::recordCalibrationPattern(std::string * command_dump_info) {
+void Ensenso::recordCalibrationPattern(std::string * parameters_dump_info, std::string * result_dump_info) {
 	// disable FlexView
 	int flex_view = flexView();
 	if (flex_view > 0) setFlexView(0);
@@ -302,13 +302,14 @@ void Ensenso::recordCalibrationPattern(std::string * command_dump_info) {
 	setNx(command_collect_pattern.parameters()[itmCameras], serialNumber());
 	setNx(command_collect_pattern.parameters()[itmDecodeData], true);
 
-	// Set persistent parameters for debugging.
-	setNx(command_collect_pattern.commandItem[itmDefault][itmPersistentParameters], true);
+	// Optionally copy the parameters for debugging.
+	if (parameters_dump_info) *parameters_dump_info = command_collect_pattern.parameters().asJson(true);
 
 	try {
 		executeNx(command_collect_pattern);
 	} catch (std::exception const & e) {
-		if (command_dump_info) *command_dump_info = command_collect_pattern.commandItem.asJson(true);
+		// Optionally copy the result for debugging.
+		if (result_dump_info) *result_dump_info = command_collect_pattern.result().asJson(true);
 		throw;
 	}
 
@@ -318,7 +319,7 @@ void Ensenso::recordCalibrationPattern(std::string * command_dump_info) {
 	}
 
 	// Optionally copy the result for debugging.
-	if (command_dump_info) *command_dump_info = command_collect_pattern.commandItem.asJson(true);
+	if (result_dump_info) *result_dump_info = command_collect_pattern.result().asJson(true);
 }
 
 Eigen::Isometry3d Ensenso::detectCalibrationPattern(int const samples, bool ignore_calibration)  {
@@ -380,7 +381,8 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 	std::optional<Eigen::Isometry3d> const & camera_guess,
 	std::optional<Eigen::Isometry3d> const & pattern_guess,
 	std::string const & target,
-	std::string * command_dump_info
+	std::string * parameters_dump_info,
+	std::string * result_dump_info
 ) {
 	NxLibCommand calibrate(cmdCalibrateHandEye);
 
@@ -413,15 +415,15 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 		setNx(calibrate.parameters()[itmTransformations][i], scaled_robot_pose);
 	}
 
-	// Set persistent parameters for debugging.
-	setNx(calibrate.commandItem[itmDefault][itmPersistentParameters], true);
+	// Optionally copy the parameters for debugging.
+	if (parameters_dump_info) *parameters_dump_info = calibrate.parameters().asJson(true);
 
 	try {
 		// execute calibration command
 		executeNx(calibrate);
 	} catch (std::exception const & e) {
-		// Optionally copy the command for debugging.
-		if (command_dump_info) *command_dump_info = calibrate.commandItem.asJson(true);
+		// Optionally copy the result for debugging.
+		if (result_dump_info) *result_dump_info = calibrate.result().asJson(true);
 		throw;
 	}
 
@@ -431,8 +433,8 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 	camera_pose.translation()  *= 0.001;
 	pattern_pose.translation() *= 0.001;
 
-	// Optionally copy the command for debugging.
-	if (command_dump_info) *command_dump_info = calibrate.commandItem.asJson(true);
+	// Optionally copy the result for debugging.
+	if (result_dump_info) *result_dump_info = calibrate.result().asJson(true);
 
 	return Ensenso::CalibrationResult{
 		camera_pose,

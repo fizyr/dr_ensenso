@@ -208,7 +208,8 @@ public:
 
 	/// Records a calibration pattern.
 	void recordCalibrationPattern(
-		std::string * command_dump_info = nullptr ///< If provided, copies the command to this string as json.
+		std::string * parameters_dump_info = nullptr, ///< If provided, copies the parameters to this string as json.
+		std::string * result_dump_info = nullptr      ///< If provided, copies the result to this string as json.
 	);
 
 	/// Detect the calibration pattern and estimate the pose of the pattern.
@@ -254,7 +255,8 @@ public:
 		std::optional<Eigen::Isometry3d> const & camera_guess = {},  ///< Initial guess for the camera relative to the hand (camera in hand) or camera relative to robot base (camera fixed). Not necessary, but speeds up calibration.
 		std::optional<Eigen::Isometry3d> const & pattern_guess = {}, ///< Initial guess for the pattern relative to the hand (camera in hand) or pattern relative to robot base (camera fixed). Not necessary, but speeds up calibration.
 		std::string const & target = "",                             ///< Target frame to calibrate to. Default is "Hand" for camera in hand and "Workspace" for fixed camera.
-		std::string * command_dump_info = nullptr                    ///< If provided, copies the command to this string as json.
+		std::string * parameters_dump_info = nullptr,                ///< If provided, copies the parameters to this string as json.
+		std::string * result_dump_info = nullptr                     ///< If provided, copies the result to this string as json.
 	);
 
 	/// Returns the calibration between ueye and ensenso.
