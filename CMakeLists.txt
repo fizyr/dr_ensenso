@@ -8,7 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 find_package(catkin REQUIRED COMPONENTS
-	dr_pcl
 	estd
 	roscpp
 )
@@ -19,20 +18,37 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(jsoncpp REQUIRED)
 
+find_package(PCL REQUIRED)
+
+# Remove python2 dependencies, we don't need these anyway.
+list(REMOVE_ITEM PCL_LIBRARIES
+	"vtkGUISupportQt"
+	"vtkGUISupportQtOpenGL"
+	"vtkGUISupportQtSQL"
+	"vtkGUISupportQtWebkit"
+	"vtkViewsQt"
+	"vtkRenderingQt"
+)
+list(FILTER PCL_LIBRARIES    EXCLUDE REGEX "(^|/)(libNxLib|libpython2).*[.]so$")
+list(FILTER catkin_LIBRARIES EXCLUDE REGEX "(^|/)(libpython2).*[.]so$")
+
+
 catkin_package(
 	INCLUDE_DIRS include
 	LIBRARIES ${PROJECT_NAME}
 	DEPENDS Ensenso Boost EIGEN3 OpenCV jsoncpp
-	CATKIN_DEPENDS dr_pcl estd
+	CATKIN_DEPENDS estd
+	CFG_EXTRAS "compile_options.cmake"
 )
 
 include_directories(SYSTEM
-	${catkin_INCLUDE_DIRS}
-	${Ensenso_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIRS}
+	${catkin_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIRS}
-	${OpenCV_INCLUDE_DIRS}
+	${Ensenso_INCLUDE_DIRS}
 	${jsoncpp_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
+	${PCL_INCLUDE_DIRS}
 )
 include_directories(include/${PROJECT_NAME})
 
@@ -46,12 +62,13 @@ add_library(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-	${catkin_LIBRARIES}
-	${Ensenso_LIBRARIES}
 	${Boost_LIBRARIES}
+	${catkin_LIBRARIES}
 	${EIGEN3_LIBRARIES}
-	${OpenCV_LIBRARIES}
+	${Ensenso_LIBRARIES}
 	${jsoncpp_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	${PCL_LIBRARIES}
 )
 
 install(

@@ -1,0 +1,1 @@
+set(dr_ensenso_COMPILE_OPTIONS @PCL_DEFINITIONS@)
