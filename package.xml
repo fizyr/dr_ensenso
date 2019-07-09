@@ -15,7 +15,6 @@
 	<depend>libopencv-dev</depend>
 	<depend>jsoncpp</depend>
 
-	<depend>dr_pcl</depend>
 	<depend>estd</depend>
 	<depend>roscpp</depend>
 </package>
