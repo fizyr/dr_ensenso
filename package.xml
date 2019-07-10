@@ -13,6 +13,7 @@
 	<depend>eigen</depend>
 	<depend>ensenso-sdk</depend>
 	<depend>libopencv-dev</depend>
+	<depend>libpcl-all-dev</depend>
 	<depend>jsoncpp</depend>
 
 	<depend>estd</depend>
