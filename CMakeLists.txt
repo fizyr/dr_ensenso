@@ -36,7 +36,7 @@ list(FILTER catkin_LIBRARIES EXCLUDE REGEX "(^|/)(libpython2).*[.]so$")
 catkin_package(
 	INCLUDE_DIRS include
 	LIBRARIES ${PROJECT_NAME}
-	DEPENDS Ensenso Boost EIGEN3 OpenCV jsoncpp
+	DEPENDS PCL Ensenso Boost EIGEN3 OpenCV jsoncpp
 	CATKIN_DEPENDS estd
 	CFG_EXTRAS "compile_options.cmake"
 )
