@@ -15,6 +15,7 @@
 	<depend>libopencv-dev</depend>
 	<depend>libpcl-all-dev</depend>
 	<depend>jsoncpp</depend>
+	<depend>fmt</depend>
 
 	<depend>estd</depend>
 	<depend>roscpp</depend>

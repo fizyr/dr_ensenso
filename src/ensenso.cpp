@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <fstream>
 
+#include <fmt/format.h>
 #include <json/json.h>
 
 namespace dr {
@@ -46,13 +47,15 @@ NxLibItem imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular, ImageT
 	throw std::runtime_error("Failed to get image node: unknown image type: " + std::to_string(int(type)));
 }
 
-Ensenso::Ensenso(std::string serial, bool connect_monocular, NxLibInitToken token) : init_token_{std::move(token)} {
+Ensenso::Ensenso(std::string serial, bool connect_monocular, LogFunction logger, NxLibInitToken token) : init_token_{std::move(token)}, logger_{std::move(logger)} {
 	if (serial == "") {
+		log("Opening first available Ensenso camera.");
 		// Try to find a stereo camera.
-		std::optional<NxLibItem> camera = openCameraByType(valStereo);
+		std::optional<NxLibItem> camera = openCameraByType(valStereo, logger_);
 		if (!camera) throw std::runtime_error("Failed to open any Ensenso camera.");
 		stereo_node = *camera;
 	} else {
+		log(fmt::format("Opening camera with serial {}.", serial));
 		// Open the requested camera.
 		std::optional<NxLibItem> camera = openCameraBySerial(serial);
 		if (!camera) throw std::runtime_error("Could not open an Ensenso camera with serial " + serial + ".");
@@ -61,8 +64,10 @@ Ensenso::Ensenso(std::string serial, bool connect_monocular, NxLibInitToken toke
 
 	// Get the linked monocular camera.
 	if (connect_monocular) {
-		monocular_node = openCameraByLink(serialNumber());
+		log("Looking for linked monocular camera.");
+		monocular_node = openCameraByLink(serialNumber(), logger_);
 		if (!monocular_node) throw std::runtime_error("Failed to open linked monocular camera.");
+		log(fmt::format("Opened monocular camera with serial {}", getNx<std::string>((*monocular_node)[itmSerialNumber])));
 	}
 }
 
@@ -166,6 +171,7 @@ int Ensenso::flexView() const {
 }
 
 void Ensenso::setFlexView(int value) {
+	log(fmt::format("Setting flex view to {}", value));
 	setNx(stereo_node[itmParameters][itmCapture][itmFlexView], value);
 }
 
@@ -180,6 +186,7 @@ std::optional<bool> Ensenso::frontLight() {
 }
 
 void Ensenso::setFrontLight(bool state) {
+	log(fmt::format("Turning front light {}", state ? "on" : "off"));
 	setNx(stereo_node[itmParameters][itmCapture][itmFrontLight], state);
 }
 
@@ -188,6 +195,7 @@ bool Ensenso::projector() {
 }
 
 void Ensenso::setProjector(bool state) {
+	log(fmt::format("Turning projector {}", state ? "on" : "off"));
 	setNx(stereo_node[itmParameters][itmCapture][itmProjector], state);
 }
 
@@ -211,8 +219,17 @@ bool Ensenso::trigger(bool stereo, bool monocular) const {
 	monocular = monocular && monocular_node;
 
 	NxLibCommand command(cmdTrigger);
-	if (stereo) setNx(command.parameters()[itmCameras][0], serialNumber());
-	if (monocular) setNx(command.parameters()[itmCameras][stereo ? 1 : 0], getNx<std::string>(monocular_node.value()[itmSerialNumber]));
+	log("Triggering cameras:");
+	if (stereo) {
+		std::string serial = serialNumber();
+		log(fmt::format(" - {}", serial));
+		setNx(command.parameters()[itmCameras][0], serial);
+	}
+	if (monocular) {
+		std::string serial = getNx<std::string>(monocular_node.value()[itmSerialNumber]);
+		log(fmt::format(" - {}", serial));
+		setNx(command.parameters()[itmCameras][stereo ? 1 : 0], serial);
+	}
 	executeNx(command);
 
 	if (stereo && !getNx<bool>(command.result()[serialNumber()][itmTriggered])) return false;

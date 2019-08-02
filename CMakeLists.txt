@@ -17,6 +17,7 @@ find_package(Boost REQUIRED COMPONENTS filesystem date_time chrono)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(jsoncpp REQUIRED)
+find_package(fmt REQUIRED)
 
 find_package(PCL REQUIRED)
 
@@ -69,6 +70,8 @@ target_link_libraries(${PROJECT_NAME}
 	${jsoncpp_LIBRARIES}
 	${OpenCV_LIBRARIES}
 	${PCL_LIBRARIES}
+	${fmt_LIBRARIES}
+	fmt::fmt
 )
 
 install(

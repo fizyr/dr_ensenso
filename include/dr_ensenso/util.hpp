@@ -4,12 +4,15 @@
 #include <ensenso/nxLib.h>
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <stdexcept>
 #include <string>
 
 
 namespace dr {
+
+using LogFunction = std::function<void (std::string)>;
 
 /// Find a camera by serial number.
 std::optional<NxLibItem> findCameraBySerial(std::string const & serial);
@@ -18,7 +21,7 @@ std::optional<NxLibItem> findCameraBySerial(std::string const & serial);
 std::optional<NxLibItem> findCameraByEepromId(int eeprom_id);
 
 /// Find a camera that is linked to another camera given by serial.
-std::optional<NxLibItem> findCameraByLink(std::string const & serial);
+std::optional<NxLibItem> findCameraByLink(std::string const & serial, LogFunction logger = nullptr);
 
 /// Find a camera by type.
 /**
@@ -26,7 +29,7 @@ std::optional<NxLibItem> findCameraByLink(std::string const & serial);
  *
  * \return An NxLibItem representing a camera of the requested type if one can be found.
  */
-std::optional<NxLibItem> findCameraByType(std::string const & type);
+std::optional<NxLibItem> findCameraByType(std::string const & type, LogFunction logger = nullptr);
 
 /// Find and open a camera by serial number.
 /**
@@ -47,7 +50,7 @@ std::optional<NxLibItem> openCameraByEepromId(int eeprom_id);
  * \return The NxLibItem representing the found camera or an empty optional.
  * \throws if opening the camera fails.
  */
-std::optional<NxLibItem> openCameraByLink(std::string const & serial);
+std::optional<NxLibItem> openCameraByLink(std::string const & serial, LogFunction logger = nullptr);
 
 /// Find and open a camera by type.
 /**
@@ -55,7 +58,7 @@ std::optional<NxLibItem> openCameraByLink(std::string const & serial);
  * \return An NxLibItem representing a camera of the requested type if one can be found.
  * \throws if opening the camera fails.
  */
-std::optional<NxLibItem> openCameraByType(std::string const & type);
+std::optional<NxLibItem> openCameraByType(std::string const & type, LogFunction logger = nullptr);
 
 /// Execute an NxLibCommand.
 /**
