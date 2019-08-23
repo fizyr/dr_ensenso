@@ -18,6 +18,26 @@ cv::Mat toCvMat(NxLibItem const & item, std::string const & what) {
 	return result;
 }
 
+void toCvMat(
+	NxLibItem const & item,
+	std::uint8_t * pointer,
+	std::size_t width,
+	std::size_t height,
+	int cv_type,
+	std::string const & what
+) {
+	int error = 0;
+	cv::Mat wrapped(height, width, cv_type, pointer);
+	item.getBinaryData(&error, wrapped, nullptr);
+	if (error) throw NxError(item, error, what);
+
+
+	// convert RGB output from camera to OpenCV standard (BGR)
+	if (wrapped.channels() == 3) {
+		cv::cvtColor(wrapped, wrapped, cv::COLOR_RGB2BGR);
+	}
+}
+
 cv::Mat toCameraMatrix(NxLibItem const & item, std::string const & camera, std::string const & what) {
 	int error = 0;
 	cv::Mat result = cv::Mat::zeros(3, 3, CV_64F);
