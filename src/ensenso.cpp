@@ -397,6 +397,8 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 	bool moving,
 	std::optional<Eigen::Isometry3d> const & camera_guess,
 	std::optional<Eigen::Isometry3d> const & pattern_guess,
+	std::optional<std::array<bool, 3>> const & translation_fixed,
+	std::optional<std::array<bool, 3>> const & rotation_fixed,
 	std::string const & target,
 	std::string * parameters_dump_info,
 	std::string * result_dump_info
@@ -415,6 +417,20 @@ Ensenso::CalibrationResult Ensenso::computeCalibration(
 		Eigen::Isometry3d scaled_pattern_guess = *pattern_guess;
 		scaled_pattern_guess.translation() *= 1000;
 		setNx(calibrate.parameters()[itmPatternPose], scaled_pattern_guess);
+	}
+
+	// set fixed translation axes
+	if (translation_fixed) {
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][0], (*translation_fixed)[0]);
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][1], (*translation_fixed)[1]);
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][2], (*translation_fixed)[2]);
+	}
+
+	// set fixed rotation axes (for example a gantry robot)
+	if (rotation_fixed) {
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][0], (*rotation_fixed)[0]);
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][1], (*rotation_fixed)[1]);
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][2], (*rotation_fixed)[2]);
 	}
 
 	// setup (camera in hand / camera fixed)

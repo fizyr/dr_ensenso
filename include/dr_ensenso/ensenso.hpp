@@ -255,13 +255,15 @@ public:
 
 	/// Performs calibration using previously recorded calibration results and the corresponding robot poses.
 	CalibrationResult computeCalibration(
-		std::vector<Eigen::Isometry3d> const & robot_poses,          ///< Vector of robot poses corresponding to the stored calibration patterns.
-		bool camera_moving,                                          ///< If true, the camera is expected to be in hand. Otherwise the camera is expected to be fixed.
-		std::optional<Eigen::Isometry3d> const & camera_guess = {},  ///< Initial guess for the camera relative to the hand (camera in hand) or camera relative to robot base (camera fixed). Not necessary, but speeds up calibration.
-		std::optional<Eigen::Isometry3d> const & pattern_guess = {}, ///< Initial guess for the pattern relative to the hand (camera in hand) or pattern relative to robot base (camera fixed). Not necessary, but speeds up calibration.
-		std::string const & target = "",                             ///< Target frame to calibrate to. Default is "Hand" for camera in hand and "Workspace" for fixed camera.
-		std::string * parameters_dump_info = nullptr,                ///< If provided, copies the parameters to this string as json.
-		std::string * result_dump_info = nullptr                     ///< If provided, copies the result to this string as json.
+		std::vector<Eigen::Isometry3d> const & robot_poses,                          ///< Vector of robot poses corresponding to the stored calibration patterns.
+		bool camera_moving,                                                          ///< If true, the camera is expected to be in hand. Otherwise the camera is expected to be fixed.
+		std::optional<Eigen::Isometry3d> const & camera_guess = std::nullopt,        ///< Initial guess for the camera relative to the hand (camera in hand) or camera relative to robot base (camera fixed). Not necessary, but speeds up calibration.
+		std::optional<Eigen::Isometry3d> const & pattern_guess = std::nullopt,       ///< Initial guess for the pattern relative to the hand (camera in hand) or pattern relative to robot base (camera fixed). Not necessary, but speeds up calibration.
+		std::optional<std::array<bool, 3>> const & translation_fixed = std::nullopt, ///< Array of length 3 to indicate if the robot has a fixed translation.
+		std::optional<std::array<bool, 3>> const & rotation_fixed = std::nullopt,    ///< Array of length 3 to indicate if the robot has a fixed rotation.
+		std::string const & target = "",                                             ///< Target frame to calibrate to. Default is "Hand" for camera in hand and "Workspace" for fixed camera.
+		std::string * parameters_dump_info = nullptr,                                ///< If provided, copies the parameters to this string as json.
+		std::string * result_dump_info = nullptr                                     ///< If provided, copies the result to this string as json.
 	);
 
 	/// Returns the calibration between ueye and ensenso.
