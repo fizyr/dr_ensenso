@@ -3,7 +3,7 @@
 #include <dr_ensenso/ensenso.hpp>
 
 
-namespace fizyr::ensenso {
+namespace dr {
 
 using Error = estd::error;
 
