@@ -35,16 +35,16 @@ struct EnsensoCalibrationConfig {
 };
 
 DR_PARAM_DEFINE_STRUCT_DECOMPOSITION(EnsensoCalibrationConfig,
-(initialize_config,     "InitializeCalibrationConfig",  "", true)
-(store_calibration,     "bool",                         "", false)
+	(initialize_config, "InitializeCalibrationConfig", "", true)
+	(store_calibration, "bool",                        "", false)
 );
 
 DR_PARAM_DEFINE_STRUCT_DECOMPOSITION(InitializeCalibrationConfig,
-(camera_moving, "bool"  , "", true)
-(moving_frame , "string", "", true)
-(fixed_frame  , "string", "", true)
-(camera_guess , "pose"  , "", true)
-(pattern_guess, "pose"  , "", true)
-(dump_dir     , "string", "", true)
+	(camera_moving, "bool"  , "", true)
+	(moving_frame , "string", "", true)
+	(fixed_frame  , "string", "", true)
+	(camera_guess , "pose"  , "", true)
+	(pattern_guess, "pose"  , "", true)
+	(dump_dir     , "string", "", true)
 );
 

@@ -205,11 +205,11 @@ public:
 	 * The image must have been captured, retrieved and/or processed before it can be loaded.
 	 */
 	void loadImage(
-		ImageType type,
-		std::uint8_t * pointer,
-		std::size_t width,
-		std::size_t height,
-		int cv_type
+		ImageType type,     /// Type of the image to load.
+		std::uint8_t* buf,  /// Pre-allocated buffer to load the image into.
+		std::size_t width,  /// Width of the image to load.
+		std::size_t height, /// Height of the image to load.
+		int cv_type         /// Defines pixel format as described in the OpenCV CvType class.
 	);
 
 
