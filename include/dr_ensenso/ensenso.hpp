@@ -50,12 +50,12 @@ public:
 	/// Ensenso calibration result (camera pose, pattern pose, iterations needed, residual error).
 	using CalibrationResult = std::tuple<Eigen::Isometry3d, Eigen::Isometry3d, int, double>;
 
-	/// Camera capture parameters.
+	/// Camera capture parameters, parsed from the cameras.
 	struct CaptureParams {
-		std::size_t stereo_width;
-		std::size_t stereo_height;
-		std::optional<std::size_t> monocular_width;
-		std::optional<std::size_t> monocular_height;
+		std::size_t stereo_width;                    // Width of image from stereo camera.
+		std::size_t stereo_height;                   // Height of image from stereo camera.
+		std::optional<std::size_t> monocular_width;  // Width of image from monocular camera.
+		std::optional<std::size_t> monocular_height; // Height of image from monocular camera.
 	};
 
 protected:
