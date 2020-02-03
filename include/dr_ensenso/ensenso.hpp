@@ -50,6 +50,14 @@ public:
 	/// Ensenso calibration result (camera pose, pattern pose, iterations needed, residual error).
 	using CalibrationResult = std::tuple<Eigen::Isometry3d, Eigen::Isometry3d, int, double>;
 
+	/// Camera capture parameters, parsed from the cameras.
+	struct CaptureParams {
+		std::size_t stereo_width;                    // Width of image from stereo camera.
+		std::size_t stereo_height;                   // Height of image from stereo camera.
+		std::optional<std::size_t> monocular_width;  // Width of image from monocular camera.
+		std::optional<std::size_t> monocular_height; // Height of image from monocular camera.
+	};
+
 protected:
 	/// The root EnsensoSDK node.
 	NxLibItem root;
@@ -192,6 +200,19 @@ public:
 	 */
 	cv::Mat loadImage(ImageType type);
 
+	/// Load an image from the camera.
+	/**
+	 * The image must have been captured, retrieved and/or processed before it can be loaded.
+	 */
+	void loadImage(
+		ImageType type,     /// Type of the image to load.
+		std::uint8_t* buf,  /// Pre-allocated buffer to load the image into.
+		std::size_t width,  /// Width of the image to load.
+		std::size_t height, /// Height of the image to load.
+		int cv_type         /// Defines pixel format as described in the OpenCV CvType class.
+	);
+
+
 	/// Load the point cloud from the camera.
 	/**
 	 * The point cloud must have been computed before it can be loaded.
@@ -266,6 +287,9 @@ public:
 
 	/// Returns the calibration between ueye and ensenso.
 	Eigen::Isometry3d getMonocularLink() const;
+
+	/// Gets capture parameters.
+	CaptureParams getCaptureParameters();
 
 protected:
 

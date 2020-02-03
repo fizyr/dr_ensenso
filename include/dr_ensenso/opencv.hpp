@@ -11,6 +11,19 @@ namespace dr {
  */
 cv::Mat toCvMat(NxLibItem const & item, std::string const & what = "");
 
+/// Convert an NxLibItem to a cv::Mat using an existing pointer.
+/**
+ * \throw NxError on failure.
+ */
+void toCvMat(
+	NxLibItem const & item,
+	std::uint8_t * pointer,
+	std::size_t width,
+	std::size_t height,
+	int cv_type,
+	std::string const & what = ""
+);
+
 /// Convert a NxLibItem containing camera matrix to a cv::Mat.
 /**
  * The camera matrix corresponds to the K parameter in OpenCV.

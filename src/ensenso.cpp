@@ -287,6 +287,22 @@ cv::Mat Ensenso::loadImage(ImageType type) {
 	return toCvMat(imageNode(stereo_node, monocular_node, type));
 }
 
+void Ensenso::loadImage(
+	ImageType type,
+	std::uint8_t * pointer,
+	std::size_t width,
+	std::size_t height,
+	int cv_type
+) {
+	toCvMat(
+		imageNode(stereo_node, monocular_node, type),
+		pointer,
+		width,
+		height,
+		cv_type
+	);
+}
+
 pcl::PointCloud<pcl::PointXYZ> Ensenso::loadPointCloud() {
 	// Convert the binary data to a point cloud.
 	return toPointCloud(stereo_node[itmImages][itmPointMap]);
@@ -515,6 +531,31 @@ Eigen::Isometry3d Ensenso::getMonocularLink() const {
 	pose.translation() *= 0.001;
 
 	return pose;
+}
+
+Ensenso::CaptureParams Ensenso::getCaptureParameters() {
+	CaptureParams params;
+	auto stereo_sensor_params = stereo_node[itmSensor];
+	auto stereo_size = stereo_sensor_params[itmSize];
+	params.stereo_width  = stereo_size[0].asInt();
+	params.stereo_height = stereo_size[1].asInt();
+
+	log(fmt::format("Stereo size {}x{}.", params.stereo_width, params.stereo_height));
+
+	if (!monocular_node) return params;
+
+	auto monocular_params = monocular_node.value();
+	auto monocular_sensor_params = monocular_params[itmSensor];
+	auto monocular_size = monocular_sensor_params[itmSize];
+	params.monocular_width  = monocular_size[0].asInt();
+	params.monocular_height = monocular_size[1].asInt();
+
+	log(fmt::format("Monocular size {}x{}.", *params.monocular_width, *params.monocular_height));
+
+	return params;
+
+
+
 }
 
 }
