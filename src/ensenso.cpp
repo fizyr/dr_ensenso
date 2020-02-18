@@ -308,8 +308,16 @@ pcl::PointCloud<pcl::PointXYZ> Ensenso::loadPointCloud() {
 	return toPointCloud(stereo_node[itmImages][itmPointMap]);
 }
 
+void Ensenso::loadPointCloudToBuffer(float* buf, std::size_t width, std::size_t height) {
+	pointCloudToBuffer(stereo_node[itmImages][itmPointMap], "", buf, width, height);
+}
+
 pcl::PointCloud<pcl::PointXYZ> Ensenso::loadRegisteredPointCloud() {
 	return toPointCloud(root[itmImages][itmRenderPointMap]);
+}
+
+void Ensenso::loadRegisteredPointCloudToBuffer(float* buf, std::size_t width, std::size_t height) {
+	pointCloudToBuffer(stereo_node[itmImages][itmRenderPointMap], "", buf, width, height);
 }
 
 void Ensenso::discardCalibrationPatterns() {

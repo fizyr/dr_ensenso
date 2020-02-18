@@ -219,7 +219,17 @@ public:
 	 *
 	 * \param roi The region of interest.
 	 */
-	pcl::PointCloud<pcl::PointXYZ> loadPointCloud();
+	pcl::PointCloud<pcl::PointXYZ> loadPointCloud(); // TODO: Remove (inc. PCL dependency) when not used anymore.
+
+	/// Load the point cloud from the camera into a buffer.
+	/**
+	 * The point cloud must have been computed before it can be loaded.
+	 */
+	void loadPointCloudToBuffer(
+			float* buf,         /// The buffer to load the pointcloud into.
+			std::size_t width,  /// The width of the pointcloud to load.
+			std::size_t height  /// The height of the pointcloud to load.
+	);
 
 	/// Loads the pointcloud registered to the monocular camera.
 	/**
@@ -227,7 +237,17 @@ public:
 	 *
 	 * \param roi The region of interest.
 	 */
-	pcl::PointCloud<pcl::PointXYZ> loadRegisteredPointCloud();
+	pcl::PointCloud<pcl::PointXYZ> loadRegisteredPointCloud(); // TODO: Remove (inc. PCL dependency) when not used anymore.
+
+	/// Load the pointcloud registered to the monocular camera.
+	/**
+	 * The point cloud must have been computed and registered before it can be loaded.
+	 */
+	void loadRegisteredPointCloudToBuffer(
+			float* buf,         /// The buffer to load the pointcloud into.
+			std::size_t width,  /// The width of the pointcloud to load.
+			std::size_t height  /// The height of the pointcloud to load.
+	);
 
 	/// Discards all stored calibration patterns.
 	void discardCalibrationPatterns();
