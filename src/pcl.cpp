@@ -10,8 +10,13 @@ namespace {
 	pcl::uint64_t ensensoStampToPcl(double stamp) { return (stamp - 11644473600.0) * 1000000.0; }
 }
 
-void pointCloudToBuffer(NxLibItem const & item, std::string const & what, float* buf,
-	std::size_t width, std::size_t height) {
+void pointCloudToBuffer(
+		NxLibItem const & item,
+		std::string const & what,
+		float* buf,
+		std::size_t width,
+		std::size_t height
+	) {
 	int error = 0;
 
 	// Retrieve metadata.
@@ -35,13 +40,13 @@ void pointCloudToBuffer(NxLibItem const & item, std::string const & what, float*
 	if (error) throw NxError(item, error, what);
 
 	// Copy data in padded buffer (and convert millimeters to meters)
-	for (size_t i = 0; i < point_list.size() / 3; i++) {
+	for (std::size_t i = 0; i < point_list.size() / 3; i++) {
 		int cur_buf_index = i * 4;
 		int cur_list_index = i * 3;
 		buf[cur_buf_index] = point_list[cur_list_index] / 1000.0;
 		buf[cur_buf_index+1] = point_list[cur_list_index + 1] / 1000.0;
 		buf[cur_buf_index+2] = point_list[cur_list_index + 2] / 1000.0;
-		buf[cur_buf_index+3] = 0;
+		buf[cur_buf_index+3] = 1;
 	}
 }
 
