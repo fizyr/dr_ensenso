@@ -12,7 +12,7 @@ namespace dr {
 /**
  * \throw NxError on failure.
  */
-pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, cv::Rect roi, std::string const & what = ""); // TODO: Remove (inc. PCL dependency) when not used anymore.
+pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, std::optional<cv::Rect> roi, std::string const & what = ""); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
 /// Load the point cloud from the camera into a buffer.
 /**

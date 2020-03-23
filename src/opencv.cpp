@@ -5,7 +5,7 @@
 
 namespace dr {
 
-cv::Mat toCvMat(NxLibItem const & item, cv::Rect roi, std::string const & what) {
+cv::Mat toCvMat(NxLibItem const & item, std::optional<cv::Rect> roi, std::string const & what) {
 	int error = 0;
 	cv::Mat result;
 	item.getBinaryData(&error, result, nullptr);
@@ -16,8 +16,10 @@ cv::Mat toCvMat(NxLibItem const & item, cv::Rect roi, std::string const & what) 
 		cv::cvtColor(result, result, cv::COLOR_RGB2BGR);
 	}
 
-	if (!roi.empty()) {
-		result = result(roi);
+	if (roi.has_value()) {
+		if (!roi->empty()) {
+			result = result(*roi);
+		}
 	}
 
 	return result;

@@ -296,9 +296,13 @@ cv::Rect Ensenso::getRoi() {
 	return roi;
 }
 
-cv::Mat Ensenso::loadImage(ImageType type) {
-	auto roi = getRoi();
-	return toCvMat(imageNode(stereo_node, monocular_node, type), roi);
+cv::Mat Ensenso::loadImage(ImageType type, bool crop_to_roi) {
+	if (crop_to_roi) {
+		auto roi = getRoi();
+		return toCvMat(imageNode(stereo_node, monocular_node, type), roi);
+	} else {
+		return toCvMat(imageNode(stereo_node, monocular_node, type), std::nullopt);
+	}
 }
 
 void Ensenso::loadImage(
@@ -317,20 +321,28 @@ void Ensenso::loadImage(
 	);
 }
 
-pcl::PointCloud<pcl::PointXYZ> Ensenso::loadPointCloud() {
-	auto roi = getRoi();
+pcl::PointCloud<pcl::PointXYZ> Ensenso::loadPointCloud(bool crop_to_roi) {
+	if (crop_to_roi) {
+		auto roi = getRoi();
 
-	// Convert the binary data to a point cloud.
-	return toPointCloud(stereo_node[itmImages][itmPointMap], roi);
+		// Convert the binary data to a point cloud.
+		return toPointCloud(stereo_node[itmImages][itmPointMap], roi);
+	} else {
+		return toPointCloud(stereo_node[itmImages][itmPointMap], std::nullopt);
+	}
 }
 
 void Ensenso::loadPointCloudToBuffer(float* buf, std::size_t width, std::size_t height) {
 	pointCloudToBuffer(stereo_node[itmImages][itmPointMap], "", buf, width, height);
 }
 
-pcl::PointCloud<pcl::PointXYZ> Ensenso::loadRegisteredPointCloud() {
-	auto roi = getRoi();
-	return toPointCloud(root[itmImages][itmRenderPointMap], roi);
+pcl::PointCloud<pcl::PointXYZ> Ensenso::loadRegisteredPointCloud(bool crop_to_roi) {
+	if (crop_to_roi) {
+		auto roi = getRoi();
+		return toPointCloud(root[itmImages][itmRenderPointMap], roi);
+	} else {
+		return toPointCloud(root[itmImages][itmRenderPointMap], std::nullopt);
+	}
 }
 
 void Ensenso::loadRegisteredPointCloudToBuffer(float* buf, std::size_t width, std::size_t height) {
