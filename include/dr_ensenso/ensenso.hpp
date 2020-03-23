@@ -201,7 +201,7 @@ public:
 	/**
 	 * The image must have been captured, retrieved and/or processed before it can be loaded.
 	 */
-	cv::Mat loadImage(ImageType type, bool crop_to_roi = true);
+	cv::Mat loadImage(ImageType type, bool crop_to_roi = false);
 
 	/// Load an image from the camera.
 	/**
@@ -222,7 +222,7 @@ public:
 	 *
 	 * \param roi The region of interest.
 	 */
-	pcl::PointCloud<pcl::PointXYZ> loadPointCloud(bool crop_to_roi = true); // TODO: Remove (inc. PCL dependency) when not used anymore.
+	pcl::PointCloud<pcl::PointXYZ> loadPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
 	/// Load the point cloud from the camera into a buffer.
 	/**
@@ -240,7 +240,7 @@ public:
 	 *
 	 * \param roi The region of interest.
 	 */
-	pcl::PointCloud<pcl::PointXYZ> loadRegisteredPointCloud(bool crop_to_roi = true); // TODO: Remove (inc. PCL dependency) when not used anymore.
+	pcl::PointCloud<pcl::PointXYZ> loadRegisteredPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
 	/// Load the pointcloud registered to the monocular camera.
 	/**

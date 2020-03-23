@@ -284,14 +284,11 @@ void Ensenso::registerPointCloud() {
 }
 
 cv::Rect Ensenso::getRoi() {
-	cv::Rect roi;
-	if (stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest].exists()) {
-		int tlx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][0]);
-		int tly = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1]);
-		int rbx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0]);
-		int rby = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1]);
-		roi = cv::Rect{cv::Point2i{tlx, tly}, cv::Point2i{rbx, rby}};
-	}
+	int tlx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][0]);
+	int tly = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1]);
+	int rbx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0]);
+	int rby = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1]);
+	cv::Rect roi{cv::Point2i{tlx, tly}, cv::Point2i{rbx, rby}};
 
 	return roi;
 }

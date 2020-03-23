@@ -88,7 +88,7 @@ pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, std::optiona
 	}
 
 	if (!roi.has_value()) return cloud;
-	if (roi->empty())  return cloud;
+	if (roi->empty() || (roi->width == width && roi->height == height))  return cloud;
 	else {
 		pcl::PointCloud<pcl::PointXYZ> cropped_cloud;
 		cropped_cloud.header.stamp    = cloud.header.stamp;

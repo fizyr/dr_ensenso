@@ -17,7 +17,7 @@ cv::Mat toCvMat(NxLibItem const & item, std::optional<cv::Rect> roi, std::string
 	}
 
 	if (roi.has_value()) {
-		if (!roi->empty()) {
+		if (!roi->empty() || (roi->width == result.size().width && roi->height == result.size().height)) {
 			result = result(*roi);
 		}
 	}
