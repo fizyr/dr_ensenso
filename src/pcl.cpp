@@ -50,7 +50,7 @@ void pointCloudToBuffer(
 	}
 }
 
-pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, std::string const & what) {
+pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, cv::Rect roi, std::string const & what) {
 	int error = 0;
 
 	// Retrieve metadata.
@@ -87,7 +87,24 @@ pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, std::string 
 		cloud.points[i / 3].z = point_list[i + 2] / 1000.0;
 	}
 
-	return cloud;
+	if (roi.empty())  return cloud;
+	else {
+		pcl::PointCloud<pcl::PointXYZ> cropped_cloud;
+		cropped_cloud.header.stamp    = ensensoStampToPcl(timestamp);
+		cropped_cloud.header.frame_id = "/camera_link";
+		cropped_cloud.width           = roi.width;
+		cropped_cloud.height          = roi.height;
+		cropped_cloud.is_dense        = false;
+		cropped_cloud.resize(roi.height * roi.width);
+
+		for (int i = 0; i < roi.height; ++i) {
+			for (int j = 0; j < roi.width; ++j) {
+				cropped_cloud.at(j, i) = cloud.at(roi.tl().y + i - 1, roi.tl().x + j - 1);
+			}
+		}
+
+		return cropped_cloud;
+	}
 }
 
 }

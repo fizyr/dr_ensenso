@@ -194,6 +194,9 @@ public:
 	/// Register the point cloud to the RGB frame.
 	void registerPointCloud();
 
+	/// Get the region of interest from the ensenso parameters.
+	cv::Rect getRoi();
+
 	/// Load an image from the camera.
 	/**
 	 * The image must have been captured, retrieved and/or processed before it can be loaded.

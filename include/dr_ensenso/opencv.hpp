@@ -9,7 +9,7 @@ namespace dr {
 /**
  * \throw NxError on failure.
  */
-cv::Mat toCvMat(NxLibItem const & item, std::string const & what = "");
+cv::Mat toCvMat(NxLibItem const & item, cv::Rect roi, std::string const & what = "");
 
 /// Convert an NxLibItem to a cv::Mat using an existing pointer.
 /**
