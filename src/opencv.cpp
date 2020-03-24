@@ -16,8 +16,9 @@ cv::Mat toCvMat(NxLibItem const & item, std::optional<cv::Rect> roi, std::string
 		cv::cvtColor(result, result, cv::COLOR_RGB2BGR);
 	}
 
-	if (roi.has_value()) {
-		if (!roi->empty() || (roi->width == result.size().width && roi->height == result.size().height)) {
+	// roi width and height needs to be incremented by 1 to get the exact width and height.
+	if (roi) {
+		if (!roi->empty() && ((roi->width + 1) != result.size().width || (roi->height + 1) != result.size().height)) {
 			result = result(*roi);
 		}
 	}

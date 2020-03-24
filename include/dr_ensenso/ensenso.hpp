@@ -200,6 +200,8 @@ public:
 	/// Load an image from the camera.
 	/**
 	 * The image must have been captured, retrieved and/or processed before it can be loaded.
+	 * \param type Type of image to load.
+	 * \param crop_to_roi If true, crop the image using region of interest.
 	 */
 	cv::Mat loadImage(ImageType type, bool crop_to_roi = false);
 
@@ -220,7 +222,7 @@ public:
 	/**
 	 * The point cloud must have been computed before it can be loaded.
 	 *
-	 * \param roi The region of interest.
+	 * \param crop_to_roi If true, crop the image using region of interest.
 	 */
 	pcl::PointCloud<pcl::PointXYZ> loadPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
@@ -238,7 +240,7 @@ public:
 	/**
 	 * The point cloud must have been computed and registered before it can be loaded.
 	 *
-	 * \param roi The region of interest.
+	 * \param crop_to_roi If true, crop the image using region of interest.
 	 */
 	pcl::PointCloud<pcl::PointXYZ> loadRegisteredPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
