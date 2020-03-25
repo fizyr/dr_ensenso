@@ -19,7 +19,7 @@ cv::Mat toCvMat(NxLibItem const & item, std::optional<cv::Rect> roi, std::string
 	// roi width and height needs to be incremented by 1 to get the exact width and height.
 	if (roi) {
 		if (!roi->empty() && ((roi->width + 1) != result.size().width || (roi->height + 1) != result.size().height)) {
-			result = result(*roi);
+			result = result(cv::Rect(roi->tl().x, roi->tl().y, roi->width + 1, roi->height + 1));
 		}
 	}
 
