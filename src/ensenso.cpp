@@ -286,8 +286,9 @@ void Ensenso::registerPointCloud() {
 cv::Rect Ensenso::getRoi() {
 	int tlx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][0]);
 	int tly = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1]);
-	int rbx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0]);
-	int rby = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1]);
+	// As opencv requires exclusive right and bottom boundaries, we increment by 1.
+	int rbx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0]) + 1;
+	int rby = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1]) + 1;
 	cv::Rect roi{cv::Point2i{tlx, tly}, cv::Point2i{rbx, rby}};
 
 	return roi;
