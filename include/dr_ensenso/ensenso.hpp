@@ -194,11 +194,16 @@ public:
 	/// Register the point cloud to the RGB frame.
 	void registerPointCloud();
 
+	/// Get the region of interest from the ensenso parameters.
+	cv::Rect getRoi();
+
 	/// Load an image from the camera.
 	/**
 	 * The image must have been captured, retrieved and/or processed before it can be loaded.
+	 * \param type Type of image to load.
+	 * \param crop_to_roi If true, crop the image using region of interest.
 	 */
-	cv::Mat loadImage(ImageType type);
+	cv::Mat loadImage(ImageType type, bool crop_to_roi = false);
 
 	/// Load an image from the camera.
 	/**
@@ -217,9 +222,9 @@ public:
 	/**
 	 * The point cloud must have been computed before it can be loaded.
 	 *
-	 * \param roi The region of interest.
+	 * \param crop_to_roi If true, crop the image using region of interest.
 	 */
-	pcl::PointCloud<pcl::PointXYZ> loadPointCloud(); // TODO: Remove (inc. PCL dependency) when not used anymore.
+	pcl::PointCloud<pcl::PointXYZ> loadPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
 	/// Load the point cloud from the camera into a buffer.
 	/**
@@ -235,9 +240,9 @@ public:
 	/**
 	 * The point cloud must have been computed and registered before it can be loaded.
 	 *
-	 * \param roi The region of interest.
+	 * \param crop_to_roi If true, crop the image using region of interest.
 	 */
-	pcl::PointCloud<pcl::PointXYZ> loadRegisteredPointCloud(); // TODO: Remove (inc. PCL dependency) when not used anymore.
+	pcl::PointCloud<pcl::PointXYZ> loadRegisteredPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
 	/// Load the pointcloud registered to the monocular camera.
 	/**

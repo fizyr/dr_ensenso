@@ -283,8 +283,19 @@ void Ensenso::registerPointCloud() {
 	executeNx(command);
 }
 
-cv::Mat Ensenso::loadImage(ImageType type) {
-	return toCvMat(imageNode(stereo_node, monocular_node, type));
+cv::Rect Ensenso::getRoi() {
+	int tlx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][0]);
+	int tly = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1]);
+	// As opencv requires exclusive right and bottom boundaries, we increment by 1.
+	int rbx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0]) + 1;
+	int rby = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1]) + 1;
+	cv::Rect roi{cv::Point2i{tlx, tly}, cv::Point2i{rbx, rby}};
+
+	return roi;
+}
+
+cv::Mat Ensenso::loadImage(ImageType type, bool crop_to_roi) {
+	return toCvMat(imageNode(stereo_node, monocular_node, type), crop_to_roi ? std::optional(getRoi()) : std::nullopt);
 }
 
 void Ensenso::loadImage(
@@ -303,17 +314,17 @@ void Ensenso::loadImage(
 	);
 }
 
-pcl::PointCloud<pcl::PointXYZ> Ensenso::loadPointCloud() {
+pcl::PointCloud<pcl::PointXYZ> Ensenso::loadPointCloud(bool crop_to_roi) {
 	// Convert the binary data to a point cloud.
-	return toPointCloud(stereo_node[itmImages][itmPointMap]);
+	return toPointCloud(stereo_node[itmImages][itmPointMap], crop_to_roi ? std::optional(getRoi()) : std::nullopt);
 }
 
 void Ensenso::loadPointCloudToBuffer(float* buf, std::size_t width, std::size_t height) {
 	pointCloudToBuffer(stereo_node[itmImages][itmPointMap], "", buf, width, height);
 }
 
-pcl::PointCloud<pcl::PointXYZ> Ensenso::loadRegisteredPointCloud() {
-	return toPointCloud(root[itmImages][itmRenderPointMap]);
+pcl::PointCloud<pcl::PointXYZ> Ensenso::loadRegisteredPointCloud(bool crop_to_roi) {
+	return toPointCloud(root[itmImages][itmRenderPointMap], crop_to_roi ? std::optional(getRoi()) : std::nullopt);
 }
 
 void Ensenso::loadRegisteredPointCloudToBuffer(float* buf, std::size_t width, std::size_t height) {
