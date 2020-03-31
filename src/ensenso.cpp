@@ -328,7 +328,7 @@ pcl::PointCloud<pcl::PointXYZ> Ensenso::loadRegisteredPointCloud(bool crop_to_ro
 }
 
 void Ensenso::loadRegisteredPointCloudToBuffer(float* buf, std::size_t width, std::size_t height) {
-	pointCloudToBuffer(stereo_node[itmImages][itmRenderPointMap], "", buf, width, height);
+	pointCloudToBuffer(root[itmImages][itmRenderPointMap], "", buf, width, height);
 }
 
 void Ensenso::discardCalibrationPatterns() {
