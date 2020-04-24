@@ -31,6 +31,7 @@ void toCvMat(
 	std::size_t width,
 	std::size_t height,
 	int cv_type,
+	std::optional<cv::Rect> roi,
 	std::string const & what
 ) {
 	int error = 0;
@@ -42,6 +43,12 @@ void toCvMat(
 	// convert RGB output from camera to OpenCV standard (BGR)
 	if (wrapped.channels() == 3) {
 		cv::cvtColor(wrapped, wrapped, cv::COLOR_RGB2BGR);
+	}
+
+	if (roi) {
+		if (!roi->empty() && ((roi->width) != wrapped.size().width || (roi->height) != wrapped.size().height)) {
+			wrapped = wrapped(*roi);
+		}
 	}
 }
 

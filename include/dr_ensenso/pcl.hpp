@@ -19,10 +19,11 @@ pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, std::optiona
  * The point cloud must have been computed before it can be loaded.
  */
 void pointCloudToBuffer(
-		NxLibItem const & item,
-		std::string const & what,
-		float* buf,         /// The buffer to load the pointcloud into.
-		std::size_t width,  /// The width of the pointcloud to load.
-		std::size_t height  /// The height of the pointcloud to load.
+	NxLibItem const & item,
+	std::string const & what,
+	float* buf,         /// The buffer to load the pointcloud into.
+	std::size_t width,  /// The width of the pointcloud to load.
+	std::size_t height,  /// The height of the pointcloud to load.
+	std::optional<cv::Rect> roi = std::nullopt
 );
 }

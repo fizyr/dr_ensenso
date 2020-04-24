@@ -21,6 +21,7 @@ void toCvMat(
 	std::size_t width,
 	std::size_t height,
 	int cv_type,
+	std::optional<cv::Rect> roi = std::nullopt,
 	std::string const & what = ""
 );
 

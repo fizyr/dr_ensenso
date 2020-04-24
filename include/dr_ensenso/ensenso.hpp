@@ -210,11 +210,12 @@ public:
 	 * The image must have been captured, retrieved and/or processed before it can be loaded.
 	 */
 	void loadImage(
-		ImageType type,     /// Type of the image to load.
-		std::uint8_t* buf,  /// Pre-allocated buffer to load the image into.
-		std::size_t width,  /// Width of the image to load.
-		std::size_t height, /// Height of the image to load.
-		int cv_type         /// Defines pixel format as described in the OpenCV CvType class.
+		ImageType type,          /// Type of the image to load.
+		std::uint8_t* buf,       /// Pre-allocated buffer to load the image into.
+		std::size_t width,       /// Width of the image to load.
+		std::size_t height,      /// Height of the image to load.
+		int cv_type,             /// Defines pixel format as described in the OpenCV CvType class.
+		bool crop_to_roi = false /// If true, crop the image using region of interest.
 	);
 
 
@@ -231,9 +232,10 @@ public:
 	 * The point cloud must have been computed before it can be loaded.
 	 */
 	void loadPointCloudToBuffer(
-			float* buf,         /// The buffer to load the pointcloud into.
-			std::size_t width,  /// The width of the pointcloud to load.
-			std::size_t height  /// The height of the pointcloud to load.
+			float* buf,              /// The buffer to load the pointcloud into.
+			std::size_t width,       /// The width of the pointcloud to load.
+			std::size_t height,      /// The height of the pointcloud to load.
+			bool crop_to_roi = false /// If true, crop the image using region of interest.
 	);
 
 	/// Loads the pointcloud registered to the monocular camera.
@@ -249,9 +251,10 @@ public:
 	 * The point cloud must have been computed and registered before it can be loaded.
 	 */
 	void loadRegisteredPointCloudToBuffer(
-			float* buf,         /// The buffer to load the pointcloud into.
-			std::size_t width,  /// The width of the pointcloud to load.
-			std::size_t height  /// The height of the pointcloud to load.
+			float* buf,              /// The buffer to load the pointcloud into.
+			std::size_t width,       /// The width of the pointcloud to load.
+			std::size_t height,      /// The height of the pointcloud to load.
+			bool crop_to_roi = false /// If true, crop the image using region of interest.
 	);
 
 	/// Discards all stored calibration patterns.
@@ -314,7 +317,7 @@ public:
 	Eigen::Isometry3d getMonocularLink() const;
 
 	/// Gets capture parameters.
-	CaptureParams getCaptureParameters();
+	CaptureParams getCaptureParameters(bool crop_to_roi = false);
 
 protected:
 

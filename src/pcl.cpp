@@ -15,7 +15,8 @@ void pointCloudToBuffer(
 		std::string const & what,
 		float* buf,
 		std::size_t width,
-		std::size_t height
+		std::size_t height,
+		std::optional<cv::Rect> roi
 	) {
 	int error = 0;
 
@@ -31,8 +32,10 @@ void pointCloudToBuffer(
 	if (channels != 3) throw std::runtime_error("Unexpected number of channels: " + std::to_string(channels) + ", expected 3" + what2 + ".");
 	if (!is_float) throw std::runtime_error("Expected floating point data for point cloud conversion" + what2 + ".");
 	if (element_width != 4) throw std::runtime_error("Unexpected data width: " + std::to_string(element_width) + ", expected 4" + what2 + ".");
-	if (actual_height != height) throw std::runtime_error("Unexpected height: " + std::to_string(actual_height) + ", asked for height: " + std::to_string(height) + what2 + ".");
-	if (actual_width != width)   throw std::runtime_error("Unexpected width: "  + std::to_string(actual_width) + ", asked for width: "  + std::to_string(width) + what2 + ".");
+	if (!roi) {
+		if (actual_height != height) throw std::runtime_error("Unexpected height: " + std::to_string(actual_height) + ", asked for height: " + std::to_string(height) + what2 + ".");
+		if (actual_width != width)   throw std::runtime_error("Unexpected width: "  + std::to_string(actual_width) + ", asked for width: "  + std::to_string(width) + what2 + ".");
+	}
 
 	// Retrieve data.
 	std::vector<float> point_list;
@@ -40,14 +43,27 @@ void pointCloudToBuffer(
 	if (error) throw NxError(item, error, what);
 
 	// Copy data in padded buffer (and convert millimeters to meters)
-	for (std::size_t i = 0; i < point_list.size() / 3; i++) {
-		int cur_buf_index = i * 4;
-		int cur_list_index = i * 3;
-		buf[cur_buf_index] = point_list[cur_list_index] / 1000.0;
-		buf[cur_buf_index+1] = point_list[cur_list_index + 1] / 1000.0;
-		buf[cur_buf_index+2] = point_list[cur_list_index + 2] / 1000.0;
-		buf[cur_buf_index+3] = 1;
+	if (roi) {
+		for (int i = 0; i < roi->height * roi->width; ++i) {
+			int point_list_index = actual_width * (roi->tl().y + floor(i / roi->width)) + roi->tl().x + (i % roi->width);
+			int cur_buf_index = i * 4;
+			int cur_list_index = point_list_index * 3;
+			buf[cur_buf_index] = point_list[cur_list_index] / 1000.0;
+			buf[cur_buf_index+1] = point_list[cur_list_index + 1] / 1000.0;
+			buf[cur_buf_index+2] = point_list[cur_list_index + 2] / 1000.0;
+			buf[cur_buf_index+3] = 1;
+		}
+	} else {
+		for (std::size_t i = 0; i < point_list.size() / 3; i++) {
+			int cur_buf_index = i * 4;
+			int cur_list_index = i * 3;
+			buf[cur_buf_index] = point_list[cur_list_index] / 1000.0;
+			buf[cur_buf_index+1] = point_list[cur_list_index + 1] / 1000.0;
+			buf[cur_buf_index+2] = point_list[cur_list_index + 2] / 1000.0;
+			buf[cur_buf_index+3] = 1;
+		}
 	}
+
 }
 
 pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, std::optional<cv::Rect> roi, std::string const & what) {
