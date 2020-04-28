@@ -35,21 +35,34 @@ void toCvMat(
 	std::string const & what
 ) {
 	int error = 0;
+
 	cv::Mat wrapped(height, width, cv_type, pointer);
+	if (roi && !roi->empty()) {
+		if (height != roi->height || width != roi->width) throw std::runtime_error("ROI differs from the input width and height.");
+
+		// Retrieve metadata.
+		int initial_height, initial_width, channels, element_width;
+		bool is_float;
+		double timestamp;
+		item.getBinaryDataInfo(&error, &initial_width, &initial_height, &channels, &element_width, &is_float, &timestamp);
+		if (error) throw NxError(item, error, what);
+
+		if (((roi->width) != initial_width || (roi->height) != initial_height)) {
+			cv::Mat original(initial_height, initial_width, cv_type);
+			item.getBinaryData(&error, original, nullptr);
+			if (error) throw NxError(item, error, what);
+			original(*roi).copyTo(wrapped);
+			if (wrapped.channels() == 3) cv::cvtColor(wrapped, wrapped, cv::COLOR_RGB2BGR);
+			return;
+		}
+	}
+
 	item.getBinaryData(&error, wrapped, nullptr);
 	if (error) throw NxError(item, error, what);
 
-
 	// convert RGB output from camera to OpenCV standard (BGR)
-	if (wrapped.channels() == 3) {
-		cv::cvtColor(wrapped, wrapped, cv::COLOR_RGB2BGR);
-	}
+	if (wrapped.channels() == 3) cv::cvtColor(wrapped, wrapped, cv::COLOR_RGB2BGR);
 
-	if (roi) {
-		if (!roi->empty() && ((roi->width) != wrapped.size().width || (roi->height) != wrapped.size().height)) {
-			wrapped = wrapped(*roi);
-		}
-	}
 }
 
 cv::Mat toCameraMatrix(NxLibItem const & item, std::string const & camera, std::string const & what) {
