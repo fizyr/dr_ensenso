@@ -38,7 +38,7 @@ void toCvMat(
 
 	cv::Mat wrapped(height, width, cv_type, pointer);
 	if (roi && !roi->empty()) {
-		if (height != roi->height || width != roi->width) throw std::runtime_error("ROI differs from the input width and height.");
+		if (height != roi->height || width != roi->width) throw std::runtime_error("ROI height: " + std::to_string(roi->height) + " and width: " + std::to_string(roi->width) + " differs from input height: " + std::to_string(height) + " and width: " + std::to_string(width) + ".");
 
 		// Retrieve metadata.
 		int initial_height, initial_width, channels, element_width;
