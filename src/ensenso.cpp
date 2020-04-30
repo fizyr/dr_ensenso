@@ -303,14 +303,16 @@ void Ensenso::loadImage(
 	std::uint8_t * pointer,
 	std::size_t width,
 	std::size_t height,
-	int cv_type
+	int cv_type,
+	bool crop_to_roi
 ) {
 	toCvMat(
 		imageNode(stereo_node, monocular_node, type),
 		pointer,
 		width,
 		height,
-		cv_type
+		cv_type,
+		crop_to_roi ? std::optional(getRoi()) : std::nullopt
 	);
 }
 
@@ -319,16 +321,16 @@ pcl::PointCloud<pcl::PointXYZ> Ensenso::loadPointCloud(bool crop_to_roi) {
 	return toPointCloud(stereo_node[itmImages][itmPointMap], crop_to_roi ? std::optional(getRoi()) : std::nullopt);
 }
 
-void Ensenso::loadPointCloudToBuffer(float* buf, std::size_t width, std::size_t height) {
-	pointCloudToBuffer(stereo_node[itmImages][itmPointMap], "", buf, width, height);
+void Ensenso::loadPointCloudToBuffer(float* buf, std::size_t width, std::size_t height, bool crop_to_roi) {
+	pointCloudToBuffer(stereo_node[itmImages][itmPointMap], "", buf, width, height, crop_to_roi ? std::optional(getRoi()) : std::nullopt);
 }
 
 pcl::PointCloud<pcl::PointXYZ> Ensenso::loadRegisteredPointCloud(bool crop_to_roi) {
 	return toPointCloud(root[itmImages][itmRenderPointMap], crop_to_roi ? std::optional(getRoi()) : std::nullopt);
 }
 
-void Ensenso::loadRegisteredPointCloudToBuffer(float* buf, std::size_t width, std::size_t height) {
-	pointCloudToBuffer(root[itmImages][itmRenderPointMap], "", buf, width, height);
+void Ensenso::loadRegisteredPointCloudToBuffer(float* buf, std::size_t width, std::size_t height, bool crop_to_roi) {
+	pointCloudToBuffer(root[itmImages][itmRenderPointMap], "", buf, width, height, crop_to_roi ? std::optional(getRoi()) : std::nullopt);
 }
 
 void Ensenso::discardCalibrationPatterns() {
@@ -552,22 +554,35 @@ Eigen::Isometry3d Ensenso::getMonocularLink() const {
 	return pose;
 }
 
-Ensenso::CaptureParams Ensenso::getCaptureParameters() {
+Ensenso::CaptureParams Ensenso::getCaptureParameters(bool crop_to_roi) {
 	CaptureParams params;
-	auto stereo_sensor_params = stereo_node[itmSensor];
-	auto stereo_size = stereo_sensor_params[itmSize];
-	params.stereo_width  = stereo_size[0].asInt();
-	params.stereo_height = stereo_size[1].asInt();
+	if (crop_to_roi) {
+		auto roi = getRoi();
+		params.stereo_width = roi.width;
+		params.stereo_height = roi.height;
 
-	log(fmt::format("Stereo size {}x{}.", params.stereo_width, params.stereo_height));
+		log(fmt::format("Stereo size {}x{}.", params.stereo_width, params.stereo_height));
 
-	if (!monocular_node) return params;
+		if (!monocular_node) return params;
 
-	auto monocular_params = monocular_node.value();
-	auto monocular_sensor_params = monocular_params[itmSensor];
-	auto monocular_size = monocular_sensor_params[itmSize];
-	params.monocular_width  = monocular_size[0].asInt();
-	params.monocular_height = monocular_size[1].asInt();
+		params.monocular_width = roi.width;
+		params.monocular_height = roi.height;
+	} else {
+		auto stereo_sensor_params = stereo_node[itmSensor];
+		auto stereo_size = stereo_sensor_params[itmSize];
+		params.stereo_width  = stereo_size[0].asInt();
+		params.stereo_height = stereo_size[1].asInt();
+
+		log(fmt::format("Stereo size {}x{}.", params.stereo_width, params.stereo_height));
+
+		if (!monocular_node) return params;
+
+		auto monocular_params = monocular_node.value();
+		auto monocular_sensor_params = monocular_params[itmSensor];
+		auto monocular_size = monocular_sensor_params[itmSize];
+		params.monocular_width  = monocular_size[0].asInt();
+		params.monocular_height = monocular_size[1].asInt();
+	}
 
 	log(fmt::format("Monocular size {}x{}.", *params.monocular_width, *params.monocular_height));
 
