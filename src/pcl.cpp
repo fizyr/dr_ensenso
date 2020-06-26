@@ -33,8 +33,8 @@ void pointCloudToBuffer(
 	if (!is_float) throw std::runtime_error("Expected floating point data for point cloud conversion" + what2 + ".");
 	if (element_width != 4) throw std::runtime_error("Unexpected data width: " + std::to_string(element_width) + ", expected 4" + what2 + ".");
 	if (!roi) {
-		if (actual_height != height) throw std::runtime_error("Unexpected height: " + std::to_string(actual_height) + ", asked for height: " + std::to_string(height) + what2 + ".");
-		if (actual_width != width)   throw std::runtime_error("Unexpected width: "  + std::to_string(actual_width) + ", asked for width: "  + std::to_string(width) + what2 + ".");
+		if (std::size_t(actual_height) != height) throw std::runtime_error("Unexpected height: " + std::to_string(actual_height) + ", asked for height: " + std::to_string(height) + what2 + ".");
+		if (std::size_t(actual_width) != width)   throw std::runtime_error("Unexpected width: "  + std::to_string(actual_width) + ", asked for width: "  + std::to_string(width) + what2 + ".");
 	}
 
 	// Retrieve data.
