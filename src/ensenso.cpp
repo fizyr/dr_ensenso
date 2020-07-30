@@ -279,7 +279,7 @@ void Ensenso::registerPointCloud() {
 	setNx(command.parameters()[itmNear], 1); // distance in millimeters to the camera (clip nothing?)
 	setNx(command.parameters()[itmCamera], monocularSerialNumber());
 	// gives weird (RenderPointMap) results with OpenGL enabled, so disable
-	setNx(root[itmParameters][itmRenderPointMap][itmUseOpenGL], false);
+	setNx(root[itmDefaultParameters][itmRenderPointMap][itmUseOpenGL], false);
 	executeNx(command);
 }
 
