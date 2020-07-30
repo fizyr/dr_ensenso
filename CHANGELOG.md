@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## master -
 
+## 0.3.3 - 2020-07-30
+### Changed
+- Propagate the nxTree changes from the latest ensenso version update (2.3.1586).
+
 ## 0.3.2 - 2020-06-02
 ### Changed
 - Link with --as-needed.
