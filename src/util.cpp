@@ -8,7 +8,7 @@
 namespace dr {
 
 std::optional<NxLibItem> findCameraBySerial(std::string const & serial) {
-	NxLibItem camera = NxLibItem{}[itmCameras][itmBySerialNo][serial];
+	NxLibItem camera = NxLibItem{}[itmCameras][serial];
 	if (!camera.exists()) {
 		return {};
 	}
@@ -23,7 +23,7 @@ std::optional<NxLibItem> findCameraByEepromId(int eeprom_id) {
 
 std::optional<NxLibItem> findCameraByLink(std::string const & linked_to, LogFunction logger) {
 	if (logger) logger(fmt::format("Looking for camera linked to target {}.", linked_to));
-	NxLibItem cameras = NxLibItem{}[itmCameras][itmBySerialNo];
+	NxLibItem cameras = NxLibItem{}[itmCameras];
 	for (int i = 0; i < cameras.count(); ++i) {
 		std::string serial = getNx<std::string>(cameras[i][itmSerialNumber]);
 		NxLibItem camera = cameras[serial];
@@ -46,7 +46,7 @@ std::optional<NxLibItem> findCameraByLink(std::string const & linked_to, LogFunc
 
 std::optional<NxLibItem> findCameraByType(std::string const & wanted_type, LogFunction logger) {
 	if (logger) logger(fmt::format("Looking for camera of type {}.", wanted_type));
-	NxLibItem cameras = NxLibItem{}[itmCameras][itmBySerialNo];
+	NxLibItem cameras = NxLibItem{}[itmCameras];
 	for (int i = 0; i < cameras.count(); ++i) {
 		std::string serial = getNx<std::string>(cameras[i][itmSerialNumber]);
 		NxLibItem camera = cameras[serial];
