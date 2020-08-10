@@ -51,22 +51,30 @@ Ensenso::Ensenso(std::string serial, bool connect_monocular, LogFunction logger,
 	if (serial == "") {
 		log("Opening first available Ensenso camera.");
 		// Try to find a stereo camera.
-		std::optional<NxLibItem> camera = openCameraByType(valStereo, logger_);
-		if (!camera) throw std::runtime_error("Failed to open any Ensenso camera.");
-		stereo_node = *camera;
+		try {
+			stereo_node = *openCameraByType(valStereo, logger_);
+		} catch (std::runtime_error & e) {
+			throw std::runtime_error(fmt::format("could not open any ensenso camera. {}", e.what()));
+		}
 	} else {
 		log(fmt::format("Opening camera with serial {}.", serial));
 		// Open the requested camera.
-		std::optional<NxLibItem> camera = openCameraBySerial(serial);
-		if (!camera) throw std::runtime_error("Could not open an Ensenso camera with serial " + serial + ".");
-		stereo_node = *camera;
+		try {
+			stereo_node = *openCameraBySerial(serial);
+		} catch (std::runtime_error & e) {
+			throw std::runtime_error(fmt::format("could not open an Ensenso camera with serial {}. {}", serial, e.what()));
+		}
 	}
 
 	// Get the linked monocular camera.
 	if (connect_monocular) {
 		log("Looking for linked monocular camera.");
-		monocular_node = openCameraByLink(serialNumber(), logger_);
-		if (!monocular_node) throw std::runtime_error("Failed to open linked monocular camera.");
+		try {
+			monocular_node = *openCameraByLink(serialNumber(), logger_);
+		} catch (std::runtime_error & e) {
+			throw std::runtime_error(fmt::format("failed to open linked monocular camera. {}", e.what()));
+		}
+
 		log(fmt::format("Opened monocular camera with serial {}", getNx<std::string>((*monocular_node)[itmSerialNumber])));
 	}
 }
@@ -103,14 +111,22 @@ bool Ensenso::loadParameters(std::string const parameters_file, bool entire_tree
 			return false;
 		}
 
-		setNxJson(stereo_node, Json::writeString(Json::StreamWriterBuilder(), root));
+		try {
+			setNxJson(stereo_node, Json::writeString(Json::StreamWriterBuilder(), root));
+		} catch (std::runtime_error & e) {
+			return false;
+		}
 	} else {
 		if (root.isMember("Parameters")) {
 			// Input was a complete tree, select only the parameters subtree.
 			root = root["Parameters"];
 		}
 
-		setNxJson(stereo_node[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
+		try {
+			setNxJson(stereo_node[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
+		} catch (std::runtime_error & e) {
+			return false;
+		}
 	}
 
 	return true;
@@ -137,14 +153,22 @@ bool Ensenso::loadMonocularParameters(std::string const parameters_file, bool en
 			return false;
 		}
 
-		setNxJson(monocular_node.value(), Json::writeString(Json::StreamWriterBuilder(), root));
+		try {
+			setNxJson(monocular_node.value(), Json::writeString(Json::StreamWriterBuilder(), root));
+		} catch (std::runtime_error & e) {
+			return false;
+		}
 	} else {
 		if (root.isMember("Parameters")) {
 			// Input was a complete tree, select only the parameters subtree.
 			root = root["Parameters"];
 		}
 
-		setNxJson(monocular_node.value()[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
+		try {
+			setNxJson(monocular_node.value()[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
+		} catch (std::runtime_error & e) {
+			return false;
+		}
 	}
 
 	return true;
