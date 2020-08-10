@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.hpp"
+
 #include <Eigen/Eigen>
 
 #include <opencv2/opencv.hpp>
@@ -74,6 +76,13 @@ protected:
 	/// Log function to use for verbose logging.
 	LogFunction logger_;
 
+private:
+	/// Connect to an ensenso camera.
+	Ensenso(NxLibItem & camera_node, std::optional<NxLibItem> monocular_node) : Ensenso {
+		std::move(camera_node),
+		std::move(monocular_node)
+	} { }
+
 public:
 	constexpr static bool needMonocular(ImageType image) {
 		switch (image) {
@@ -91,8 +100,8 @@ public:
 		return false;
 	}
 
-	/// Connect to an ensenso camera.
-	Ensenso(std::string serial = "", bool connect_monocular = true, LogFunction log = nullptr, NxLibInitToken init_token = initNxLib());
+	// Connect to an ensenso camera
+	Result<Ensenso> connect(std::string serial = "", bool connect_monocular = true, LogFunction log = nullptr, NxLibInitToken init_token = initNxLib());
 
 	/// Explicitly opt-in to default move semantics.
 	Ensenso(Ensenso &&)       = default;
@@ -119,13 +128,16 @@ public:
 	}
 
 	/// Get the serial number of the stereo camera.
-	std::string serialNumber() const;
+	Result<std::string> serialNumber() const;
+
+	/// Get the serial number of a stereo camera.
+	Result<std::string> serialNumber(NxLibItem const & item) const;
 
 	/// Get the serial number of the monocular camera or an empty string if there is no monocular camera.
-	std::string monocularSerialNumber() const;
+	Result<std::string> monocularSerialNumber() const;
 
 	/// Loads the camera parameters from a JSON file.
-	bool loadParameters(std::string const parameters_file, bool entire_tree = false);
+	Result<bool> loadParameters(std::string const parameters_file, bool entire_tree = false);
 
 	/// Loads the monocular camera parameters from a JSON file. Returns false if file was not found.
 	bool loadMonocularParameters(std::string const parameters_file, bool entire_tree = false);
@@ -137,7 +149,7 @@ public:
 	bool hasFlexView() const;
 
 	/// Returns the current FlexView value. If disabled, returns -1.
-	int flexView() const;
+	Result<int> flexView() const;
 
 	/// Sets the Ensenso camera FlexView value.
 	void setFlexView(int value);
@@ -152,7 +164,7 @@ public:
 	void setFrontLight(bool state);
 
 	/// Get the projector setting (on or off).
-	bool projector();
+	Result<bool> projector();
 
 	/// Sets the projector on or off.
 	void setProjector(bool state);
@@ -168,7 +180,7 @@ public:
 	 * \param stereo If true, capture data from the stereo camera.
 	 * \param monocular If true, capture data from the monocular camera.
 	 */
-	bool trigger(bool stereo = true, bool monocular=true) const;
+	Result<bool> trigger(bool stereo = true, bool monocular=true) const;
 
 	/// Retrieve new data from the camera without sending a software trigger.
 	/**
@@ -176,7 +188,7 @@ public:
 	 * \param stereo If true, capture data from the stereo camera.
 	 * \param monocular If true, capture data from the monocular camera.
 	 */
-	bool retrieve(bool trigger = true, unsigned int timeout = 1500, bool stereo = true, bool monocular=true) const;
+	Return<bool> retrieve(bool trigger = true, unsigned int timeout = 1500, bool stereo = true, bool monocular=true) const;
 
 	/// Rectifies the images.
 	/**
@@ -195,7 +207,7 @@ public:
 	void registerPointCloud();
 
 	/// Get the region of interest from the ensenso parameters.
-	cv::Rect getRoi();
+	Result<cv::Rect> getRoi();
 
 	/// Load an image from the camera.
 	/**
