@@ -24,12 +24,22 @@ NxCommandError::NxCommandError(std::string const & command, std::string const & 
 	error_text_(error_text),
 	what_(what) {}
 
-NxCommandError NxCommandError::getCurrent(std::string const & what) {
+Result<NxCommandError> NxCommandError::getCurrent(std::string const & what) {
 	NxLibItem result = NxLibItem{}[itmExecute][itmResult];
+
+	Result<std::string> result_command = getNx<std::string>(result[itmExecute][itmCommand]);
+	if (!result_command) return result_command.error();
+
+	Result<std::string> result_error_symbol = getNx<std::string>(result[itmErrorSymbol]);
+	if (!result_error_symbol) return result_error_symbol.error();
+
+	Result<std::string> result_error_text = getNx<std::string>(result[itmErrorText]);
+	if (!result_error_text) return result_error_text.error();
+
 	return NxCommandError(
-		getNx<std::string>(result[itmExecute][itmCommand]),
-		getNx<std::string>(result[itmErrorSymbol]),
-		getNx<std::string>(result[itmErrorText]),
+		*result_command,
+		*result_error_symbol,
+		*result_error_text,
 		what
 	);
 }

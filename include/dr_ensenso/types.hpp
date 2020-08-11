@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ensenso.hpp"
-
 #include <estd/result.hpp>
 
 namespace dr {
@@ -11,7 +9,16 @@ using Error = estd::error;
 template<typename T>
 using Result = estd::result<T, Error>;
 
-using ImageType = dr::ImageType;
+enum class ImageType {
+	stereo_raw_left,
+	stereo_raw_right,
+	stereo_rectified_left,
+	stereo_rectified_right,
+	disparity,
+	monocular_raw,
+	monocular_rectified,
+	monocular_overlay,
+};
 
 inline ImageType parseImageType(std::string const & name) {
 	if (name == "stereo_raw_left"       ) return ImageType::stereo_raw_left;

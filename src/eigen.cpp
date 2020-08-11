@@ -17,31 +17,31 @@ Result<Eigen::Vector3d> toEigenVector(NxLibItem const & item) {
 }
 
 Result<Eigen::Translation3d> toEigenTranslation(NxLibItem const & item) {
-	Result<Eigen::Vector3d> to_eigen_vector_result = toEigenVector(item);
-	if (!to_eigen_vector_result) return to_eigen_vector_result.error();
+	Result<Eigen::Vector3d> translation = toEigenVector(item);
+	if (!translation) return translation.error();
 
-	return Eigen::Translation3d{*to_eigen_vector_result};
+	return Eigen::Translation3d{*translation};
 }
 
 Result<Eigen::AngleAxisd> toEigenRotation(NxLibItem const & item) {
-	Result<Eigen::Vector3d> to_eigen_vector_result = toEigenVector(item[itmAxis]);
-	if (!to_eigen_vector_result) return to_eigen_vector_result.error();
+	Result<Eigen::Vector3d> axis = toEigenVector(item[itmAxis]);
+	if (!axis) return axis.error();
 
-	Result<double> get_nx_item_angle_result = getNx<double>(item[itmAngle]);
-	if (!get_nx_item_angle_result) return get_nx_item_angle_result.error();
+	Result<double> angle = getNx<double>(item[itmAngle]);
+	if (!angle) return angle.error();
 
-	return Eigen::AngleAxisd{*get_nx_item_angle_result, *to_eigen_vector_result};
+	return Eigen::AngleAxisd{*angle, *axis};
 }
 
 Result<Eigen::Isometry3d> toEigenIsometry(NxLibItem const & item) {
-	Result<Eigen::Translation3d> to_eigen_translation_result = toEigenTranslation(item[itmTranslation]);
-	if (!to_eigen_translation_result) return to_eigen_translation_result.error();
+	Result<Eigen::Translation3d> eigen_translation = toEigenTranslation(item[itmTranslation]);
+	if (!eigen_translation) return eigen_translation.error();
 
-	Result<Eigen::AngleAxisd> to_eigen_rotation_result = toEigenRotation(item[itmRotation]);
-	if (!to_eigen_rotation_result) return to_eigen_rotation_result.error();
+	Result<Eigen::AngleAxisd> eigen_rotation = toEigenRotation(item[itmRotation]);
+	if (!eigen_rotation) return eigen_rotation.error();
 
 
-	return *to_eigen_translation_result * *to_eigen_rotation_result;
+	return *eigen_translation * *eigen_rotation;
 }
 
 Result<void> setNx(NxLibItem const & item, Eigen::Vector3d const & vector, std::string const & what) {
@@ -58,10 +58,7 @@ Result<void> setNx(NxLibItem const & item, Eigen::Vector3d const & vector, std::
 }
 
 Result<void> setNx(NxLibItem const & item, Eigen::Translation3d const & translation, std::string const & what) {
-	Result<void> set_nx_translation_result = setNx(item, translation.vector(), what);
-	if (!set_nx_translation_result) return set_nx_translation_result.error();
-
-	return estd::in_place_valid;
+	return setNx(item, translation.vector(), what);
 }
 
 Result<void> setNx(NxLibItem const & item, Eigen::AngleAxisd const & rotation, std::string const & what) {
