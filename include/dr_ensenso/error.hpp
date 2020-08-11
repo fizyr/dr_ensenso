@@ -1,6 +1,10 @@
 #pragma once
+
+#include "types.hpp"
+
 #include <ensenso/nxLib.h>
 #include <stdexcept>
+
 
 namespace dr {
 
@@ -24,7 +28,7 @@ public:
 	NxCommandError(std::string const & command, std::string const & error_symbol, std::string const & error_text, std::string const & what = "");
 
 	/// Make a NxCommandError representing the current command error.
-	static NxCommandError getCurrent(std::string const & what = "");
+	static Result<NxCommandError> getCurrent(std::string const & what = "");
 
 	std::string const & command() const { return command_; }
 	std::string const & error_symbol() const { return error_symbol_; }
@@ -37,5 +41,6 @@ public:
  * Must be called right after command execution so it can retrieve the error details.
  */
 void throwCommandError(int error, std::string const & what);
+
 
 }
