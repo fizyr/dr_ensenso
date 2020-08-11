@@ -18,11 +18,21 @@ namespace dr {
 using LogFunction = std::function<void (std::string)>;
 
 class NxLibInitGuard {
+
+using NxLibInitToken = std::shared_ptr<NxLibInitGuard>;
+
 private:
 	bool moved_ = false;
 
+	NxLibInitGuard() {};
+	static NxLibInitToken create_shared() {
+		struct make_shared_enabler : public NxLibInitGuard {};
+		return std::make_shared<make_shared_enabler>();
+	}
+
 public:
-	NxLibInitGuard();
+	static Result<NxLibInitToken> initNxLib();
+
 	NxLibInitGuard(NxLibInitGuard const &) = delete;
 	NxLibInitGuard(NxLibInitGuard &&);
 	NxLibInitGuard& operator=(NxLibInitGuard const &) = delete;
@@ -31,10 +41,6 @@ public:
 };
 
 using NxLibInitToken = std::shared_ptr<NxLibInitGuard>;
-
-inline NxLibInitToken initNxLib() {
-	return std::make_shared<NxLibInitGuard>();
-}
 
 class Ensenso {
 public:
@@ -66,7 +72,7 @@ protected:
 	LogFunction logger_;
 
 private:
-	/// Connect to an ensenso camera.
+	/// Construct a ensenso object.
 	Ensenso(NxLibItem & camera_node, std::optional<NxLibItem> monocular_node, NxLibInitToken token, LogFunction logger)
 		:
 			stereo_node{std::move(camera_node)},
@@ -92,8 +98,8 @@ public:
 		return false;
 	}
 
-	// Connect to an ensenso camera
-	Result<Ensenso> open(std::string serial = "", bool connect_monocular = true, LogFunction log = nullptr, NxLibInitToken init_token = initNxLib());
+	// Open an ensenso camera.
+	static Result<Ensenso> open(std::string serial = "", bool connect_monocular = true, LogFunction log = nullptr, NxLibInitToken token = nullptr);
 
 	/// Explicitly opt-in to default move semantics.
 	Ensenso(Ensenso &&)       = default;

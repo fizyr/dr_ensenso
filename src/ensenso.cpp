@@ -12,14 +12,6 @@
 
 namespace dr {
 
-NxLibInitGuard::NxLibInitGuard() {
-	try {
-		nxLibInitialize();
-	} catch (NxLibException const & e) {
-		throw NxError(e);
-	}
-}
-
 NxLibInitGuard::~NxLibInitGuard() {
 	if (!moved_) nxLibFinalize();
 }
@@ -31,6 +23,19 @@ NxLibInitGuard::NxLibInitGuard(NxLibInitGuard && other) {
 NxLibInitGuard & NxLibInitGuard::operator=(NxLibInitGuard && other) {
 	other.moved_ = true;
 	return *this;
+}
+
+Result<NxLibInitToken> NxLibInitGuard::initNxLib() {
+	int error = 0;
+	nxLibInitialize(error);
+	if (error) {
+		// TODO: check if this is the correct error!!
+		Result<NxCommandError> nx_error = NxCommandError::getCurrent();
+		if (!nx_error) return estd::error("failed to initialize nx library.");
+		return Error(nx_error->what());
+	}
+
+	return NxLibInitGuard::create_shared();
 }
 
 NxLibItem imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular, ImageType type) {
@@ -51,15 +56,21 @@ Result<Ensenso> Ensenso::open(std::string serial, bool connect_monocular, LogFun
 	NxLibItem camera_node;
 	std::optional<NxLibItem> monocular_node;
 
+	if (!token) {
+		Result<NxLibInitToken> new_token = NxLibInitGuard::initNxLib();
+		if (!new_token) return new_token.error();
+		token = *new_token;
+	}
+
 	if (serial == "") {
-		log("Opening first available Ensenso camera.");
+		logger("Opening first available Ensenso camera.");
 		// Try to find a stereo camera.
-		Result<NxLibItem> camera = openCameraByType(valStereo, logger_);
+		Result<NxLibItem> camera = openCameraByType(valStereo, logger);
 		if (!camera) return camera.error().push_description("failed to open any camera");
 
 		camera_node = *camera;
 	} else {
-		log(fmt::format("Opening camera with serial {}.", serial));
+		logger(fmt::format("Opening camera with serial {}.", serial));
 
 		// Try to find a stereo camera.
 		Result<NxLibItem> camera = openCameraBySerial(serial);
@@ -70,9 +81,9 @@ Result<Ensenso> Ensenso::open(std::string serial, bool connect_monocular, LogFun
 
 	// Get the linked monocular camera.
 	if (connect_monocular) {
-		log("Looking for linked monocular camera.");
+		logger("Looking for linked monocular camera.");
 
-		Result<std::string> serial_number = serialNumber(stereo_node);
+		Result<std::string> serial_number = getNx<std::string>(camera_node[itmSerialNumber]);
 		if (!serial_number) serial_number.error().push_description("failed to open linked monocular camera, stereo node serial not found.");
 
 		// Try to find a monocula camera.
@@ -81,10 +92,10 @@ Result<Ensenso> Ensenso::open(std::string serial, bool connect_monocular, LogFun
 
 		monocular_node = *camera;
 
-		Result<std::string> serial_number_monocular = serialNumber(*camera);
+		Result<std::string> serial_number_monocular = getNx<std::string>(monocular_node.value()[itmSerialNumber]);
 		if (!serial_number_monocular) serial_number_monocular.error().push_description("failed to open linked monocular camera, stereo node monocular not found.");
 
-		log(fmt::format("Opened monocular camera with serial {}", *serial_number_monocular));
+		logger(fmt::format("Opened monocular camera with serial {}", *serial_number_monocular));
 	}
 
 	return Ensenso(camera_node, monocular_node, token, logger);
