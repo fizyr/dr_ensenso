@@ -118,12 +118,12 @@ Result<std::string> Ensenso::monocularSerialNumber() const {
 	return getNx<std::string>(monocular_node.value()[itmSerialNumber]);
 }
 
-Result<bool> Ensenso::loadParameters(std::string const parameters_file, bool entire_tree) {
+Result<void> Ensenso::loadParameters(std::string const parameters_file, bool entire_tree) {
 	std::ifstream file;
 	file.open(parameters_file);
 
 	if (!file.good()) {
-		return false;
+		return estd::error("failed to load parameters, file cannot be opened.");
 	}
 
 	file.exceptions(std::ios::failbit | std::ios::badbit);
@@ -133,8 +133,7 @@ Result<bool> Ensenso::loadParameters(std::string const parameters_file, bool ent
 
 	if (entire_tree) {
 		if (!root.isMember("Parameters")) {
-			// Requested to load an entire tree, but the input did not contain an entire tree.
-			return false;
+			return estd::error("failed to load parameters, requested to load an entire tree, but the input did not contain an entire tree.");
 		}
 
 		Result<void> set_nx_json_result = setNxJson(stereo_node, Json::writeString(Json::StreamWriterBuilder(), root));
@@ -157,7 +156,7 @@ Result<bool> Ensenso::loadParameters(std::string const parameters_file, bool ent
 
 	}
 
-	return true;
+	return estd::in_place_valid;
 }
 
 bool Ensenso::loadMonocularParameters(std::string const parameters_file, bool entire_tree) {

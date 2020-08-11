@@ -135,7 +135,7 @@ public:
 	Result<std::string> monocularSerialNumber() const;
 
 	/// Loads the camera parameters from a JSON file.
-	Result<bool> loadParameters(std::string const parameters_file, bool entire_tree = false);
+	Result<void> loadParameters(std::string const parameters_file, bool entire_tree = false);
 
 	/// Loads the monocular camera parameters from a JSON file. Returns false if file was not found.
 	bool loadMonocularParameters(std::string const parameters_file, bool entire_tree = false);
