@@ -36,26 +36,26 @@ std::optional<NxLibItem> findCameraByType(std::string const & type, LogFunction 
 /**
  * \return the NxLibItem representing the found camera or an empty optional.
  */
-Result<std::optional<NxLibItem>> openCameraBySerial(std::string const & serial);
+Result<NxLibItem> openCameraBySerial(std::string const & serial);
 
 /// Find and open a camera by eeprom ID.
 /**
  * \return the NxLibItem representing the found camera or an empty optional.
  */
-Result<std::optional<NxLibItem>> openCameraByEepromId(int eeprom_id);
+Result<NxLibItem> openCameraByEepromId(int eeprom_id);
 
 /// Find and open a camera that is linked to another camera given by serial.
 /**
  * \return the NxLibItem representing the found camera or an empty optional.
  */
-Result<std::optional<NxLibItem>> openCameraByLink(std::string const & serial, LogFunction logger = nullptr);
+Result<NxLibItem> openCameraByLink(std::string const & serial, LogFunction logger = nullptr);
 
 /// Find and open a camera by type.
 /**
  * If multiple cameras of the requested type are available, it is unspecified which one will be selected.
  * \return the NxLibItem representing the found camera or an empty optional.
  */
-Result<std::optional<NxLibItem>> openCameraByType(std::string const & type, LogFunction logger = nullptr);
+Result<NxLibItem> openCameraByType(std::string const & type, LogFunction logger = nullptr);
 
 /// Execute an NxLibCommand.
 Result<void> executeNx(NxLibCommand const & command, std::string const & what = "");

@@ -72,12 +72,10 @@ std::optional<NxLibItem> findCameraByType(std::string const & wanted_type, LogFu
 }
 
 /// Open an optional camera, or return nothing.
-Result<std::optional<NxLibItem>> openCamera(std::optional<NxLibItem> camera) {
-	if (!camera) return Error{"could not find camera to open"};
-
+Result<NxLibItem> openCamera(NxLibItem camera) {
 	NxLibCommand command(cmdOpen);
 
-	Result<std::string> serial_number = getNx<std::string>((*camera)[itmSerialNumber]);
+	Result<std::string> serial_number = getNx<std::string>((camera)[itmSerialNumber]);
 	if (!serial_number) return serial_number.error().push_description("failed to open camera, serial number not found.");
 
 	Result<void> set_camera_param = setNx(command.parameters()[itmCameras], *serial_number);
@@ -89,20 +87,32 @@ Result<std::optional<NxLibItem>> openCamera(std::optional<NxLibItem> camera) {
 	return camera;
 }
 
-Result<std::optional<NxLibItem>> openCameraBySerial(std::string const & serial) {
-	return openCamera(findCameraBySerial(serial));
+Result<NxLibItem> openCameraBySerial(std::string const & serial) {
+	std::optional<NxLibItem> camera = findCameraBySerial(serial);
+	if (!camera) return estd::error(fmt::format("could not find camera with serial {}.", serial));
+
+	return openCamera(camera.value());
 }
 
-Result<std::optional<NxLibItem>> openCameraByEepromId(int eeprom_id) {
-	return openCamera(findCameraByEepromId(eeprom_id));
+Result<NxLibItem> openCameraByEepromId(int eeprom_id) {
+	std::optional<NxLibItem> camera = findCameraByEepromId(eeprom_id);
+	if (!camera) return estd::error(fmt::format("could not find camera with eeprom_id {}.", eeprom_id));
+
+	return openCamera(camera.value());
 }
 
-Result<std::optional<NxLibItem>> openCameraByLink(std::string const & serial, LogFunction logger) {
-	return openCamera(findCameraByLink(serial, logger));
+Result<NxLibItem> openCameraByLink(std::string const & serial, LogFunction logger) {
+	std::optional<NxLibItem> camera = findCameraByLink(serial, logger);
+	if (!camera) return estd::error(fmt::format("could not find camera by link {}.", serial));
+
+	return openCamera(camera.value());
 }
 
-Result<std::optional<NxLibItem>> openCameraByType(std::string const & type, LogFunction logger) {
-	return openCamera(findCameraByType(type, logger));
+Result<NxLibItem> openCameraByType(std::string const & type, LogFunction logger) {
+	std::optional<NxLibItem> camera = findCameraByType(type, logger);
+	if (!camera) return estd::error(fmt::format("could not find camera by type {}.", type));
+
+	return openCamera(camera.value());
 }
 
 Result<void> executeNx(NxLibCommand const & command, std::string const & what) {

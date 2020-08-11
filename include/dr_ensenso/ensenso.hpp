@@ -17,17 +17,6 @@ namespace dr {
 
 using LogFunction = std::function<void (std::string)>;
 
-enum class ImageType {
-	stereo_raw_left,
-	stereo_raw_right,
-	stereo_rectified_left,
-	stereo_rectified_right,
-	disparity,
-	monocular_raw,
-	monocular_rectified,
-	monocular_overlay,
-};
-
 class NxLibInitGuard {
 private:
 	bool moved_ = false;
@@ -78,10 +67,13 @@ protected:
 
 private:
 	/// Connect to an ensenso camera.
-	Ensenso(NxLibItem & camera_node, std::optional<NxLibItem> monocular_node) : Ensenso {
-		std::move(camera_node),
-		std::move(monocular_node)
-	} { }
+	Ensenso(NxLibItem & camera_node, std::optional<NxLibItem> monocular_node, NxLibInitToken token, LogFunction logger)
+		:
+			stereo_node{std::move(camera_node)},
+			monocular_node{std::move(monocular_node)},
+			init_token_{std::move(token)},
+			logger_{std::move(logger)}
+	{ }
 
 public:
 	constexpr static bool needMonocular(ImageType image) {
@@ -101,7 +93,7 @@ public:
 	}
 
 	// Connect to an ensenso camera
-	Result<Ensenso> connect(std::string serial = "", bool connect_monocular = true, LogFunction log = nullptr, NxLibInitToken init_token = initNxLib());
+	Result<Ensenso> open(std::string serial = "", bool connect_monocular = true, LogFunction log = nullptr, NxLibInitToken init_token = initNxLib());
 
 	/// Explicitly opt-in to default move semantics.
 	Ensenso(Ensenso &&)       = default;
@@ -180,7 +172,7 @@ public:
 	 * \param stereo If true, capture data from the stereo camera.
 	 * \param monocular If true, capture data from the monocular camera.
 	 */
-	Result<bool> trigger(bool stereo = true, bool monocular=true) const;
+	Result<void> trigger(bool stereo = true, bool monocular=true) const;
 
 	/// Retrieve new data from the camera without sending a software trigger.
 	/**
@@ -188,26 +180,29 @@ public:
 	 * \param stereo If true, capture data from the stereo camera.
 	 * \param monocular If true, capture data from the monocular camera.
 	 */
-	Return<bool> retrieve(bool trigger = true, unsigned int timeout = 1500, bool stereo = true, bool monocular=true) const;
+	Result<void> retrieve(bool trigger = true, unsigned int timeout = 1500, bool stereo = true, bool monocular=true) const;
 
 	/// Rectifies the images.
 	/**
 	 * \param stereo If true, rectify data from the stereo camera.
 	 * \param monocular If true, rectify data from the monocular camera.
 	 */
-	void rectifyImages(bool stereo, bool monocular);
+	Result<void> rectifyImages(bool stereo, bool monocular);
 
 	/// Compute the disparity.
-	void computeDisparity();
+	Result<void> computeDisparity();
 
 	/// Compute the point cloud.
-	void computePointCloud();
+	Result<void> computePointCloud();
 
 	/// Register the point cloud to the RGB frame.
-	void registerPointCloud();
+	Result<void> registerPointCloud();
 
 	/// Get the region of interest from the ensenso parameters.
 	Result<cv::Rect> getRoi();
+
+	/// Get the region of interest from the ensenso parameters, nullpointer if getRoi fails.
+	std::optional<cv::Rect> getOptionalRoi();
 
 	/// Load an image from the camera.
 	/**
@@ -273,7 +268,7 @@ public:
 	void discardCalibrationPatterns();
 
 	/// Records a calibration pattern.
-	void recordCalibrationPattern(
+	Result<void> recordCalibrationPattern(
 		std::string * parameters_dump_info = nullptr, ///< If provided, copies the parameters to this string as json.
 		std::string * result_dump_info = nullptr      ///< If provided, copies the result to this string as json.
 	);
@@ -286,7 +281,7 @@ public:
 	 *
 	 * \return The estimated pose of the pattern.
 	 */
-	Eigen::Isometry3d detectCalibrationPattern(
+	Result<Eigen::Isometry3d> detectCalibrationPattern(
 		int const samples,               ///< The number of samples to record.
 		bool ignore_calibration = false  ///< If true, give the pose relative to the left stereo lens.
 	);
@@ -298,10 +293,10 @@ public:
 	/**
 	 * \return The pose of the camera in the calibrated frame, if the camera is calibrated. Otherwise an empty optional.
 	 */
-	std::optional<Eigen::Isometry3d> getWorkspaceCalibration();
+	Result<Eigen::Isometry3d> getWorkspaceCalibration();
 
 	/// Sets the active workspace calibration.
-	void setWorkspaceCalibration(
+	Result<void> setWorkspaceCalibration(
 		Eigen::Isometry3d const & workspace,
 		std::string const & frame_id = "Workspace",
 		Eigen::Isometry3d const & defined_pose = Eigen::Isometry3d::Identity(),
@@ -309,13 +304,13 @@ public:
 	);
 
 	/// Clears the active workspace calibration.
-	void clearWorkspaceCalibration(bool store = false);
+	Result<void> clearWorkspaceCalibration(bool store = false);
 
 	/// Stores the active workspace caliration on the EEPROM of the camera.
-	void storeWorkspaceCalibration();
+	Result<void> storeWorkspaceCalibration();
 
 	/// Performs calibration using previously recorded calibration results and the corresponding robot poses.
-	CalibrationResult computeCalibration(
+	Result<CalibrationResult> computeCalibration(
 		std::vector<Eigen::Isometry3d> const & robot_poses,          ///< Vector of robot poses corresponding to the stored calibration patterns.
 		bool camera_moving,                                          ///< If true, the camera is expected to be in hand. Otherwise the camera is expected to be fixed.
 		std::optional<Eigen::Isometry3d> const & camera_guess = {},  ///< Initial guess for the camera relative to the hand (camera in hand) or camera relative to robot base (camera fixed). Not necessary, but speeds up calibration.
@@ -326,10 +321,10 @@ public:
 	);
 
 	/// Returns the calibration between ueye and ensenso.
-	Eigen::Isometry3d getMonocularLink() const;
+	Result<Eigen::Isometry3d> getMonocularLink() const;
 
 	/// Gets capture parameters.
-	CaptureParams getCaptureParameters(bool crop_to_roi = false);
+	Result<CaptureParams> getCaptureParameters(bool crop_to_roi = false);
 
 protected:
 
