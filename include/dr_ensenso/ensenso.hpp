@@ -128,9 +128,6 @@ public:
 	/// Get the serial number of the stereo camera.
 	Result<std::string> serialNumber() const;
 
-	/// Get the serial number of a stereo camera.
-	Result<std::string> serialNumber(NxLibItem const & item) const;
-
 	/// Get the serial number of the monocular camera, returns an error if there is no monocular camera.
 	Result<std::string> monocularSerialNumber() const;
 

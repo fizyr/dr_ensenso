@@ -110,10 +110,6 @@ Result<std::string> Ensenso::serialNumber() const {
 	return getNx<std::string>(stereo_node[itmSerialNumber]);
 }
 
-Result<std::string> Ensenso::serialNumber(NxLibItem const & item) const {
-	return getNx<std::string>(item[itmSerialNumber]);
-}
-
 Result<std::string> Ensenso::monocularSerialNumber() const {
 	return getNx<std::string>(monocular_node.value()[itmSerialNumber]);
 }
@@ -298,7 +294,7 @@ Result<void> Ensenso::trigger(bool stereo, bool monocular) const {
 	}
 
 	if (monocular) {
-		Result<std::string> serial_number = serialNumber(*monocular_node);
+		Result<std::string> serial_number = monocularSerialNumber();
 		if (!serial_number) return serial_number.error().push_description("failed to trigger: could not find monocular serial number");
 		mono_serial_number = *serial_number;
 
@@ -346,7 +342,7 @@ Result<void> Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, 
 		if (!set_camera_param) return set_camera_param.error().push_description("failed to retrieve: could not set stereo camera parameter");
 	}
 	if (monocular) {
-		Result<std::string> serial_number = serialNumber(*monocular_node);
+		Result<std::string> serial_number = monocularSerialNumber();
 		if (!serial_number) return serial_number.error().push_description("failed to retrieve: could not find monocular camera");
 		mono_serial_number = *serial_number;
 
