@@ -41,6 +41,7 @@ public:
 };
 
 using NxLibInitToken = std::shared_ptr<NxLibInitGuard>;
+using OpenCameraReturn = std::tuple<NxLibItem, std::optional<NxLibItem>, NxLibInitToken, LogFunction>;
 
 class Ensenso {
 public:
@@ -81,6 +82,13 @@ private:
 			logger_{std::move(logger)}
 	{ }
 
+	// Open an ensenso camera.
+	static Result<OpenCameraReturn> open(std::string serial = "",
+			bool connect_monocular = true,
+			LogFunction log = nullptr,
+			NxLibInitToken token = nullptr
+		);
+
 public:
 	constexpr static bool needMonocular(ImageType image) {
 		switch (image) {
@@ -98,8 +106,17 @@ public:
 		return false;
 	}
 
-	// Open an ensenso camera.
-	static Result<Ensenso> open(std::string serial = "", bool connect_monocular = true, LogFunction log = nullptr, NxLibInitToken token = nullptr);
+	static Result<std::shared_ptr<Ensenso>> openSharedCamera(std::string serial = "",
+			bool connect_monocular = true,
+			LogFunction log = nullptr,
+			NxLibInitToken token = nullptr
+		);
+
+	static Result<Ensenso> openCamera(std::string serial = "",
+			bool connect_monocular = true,
+			LogFunction log = nullptr,
+			NxLibInitToken token = nullptr
+		);
 
 	/// Explicitly opt-in to default move semantics.
 	Ensenso(Ensenso &&)       = default;

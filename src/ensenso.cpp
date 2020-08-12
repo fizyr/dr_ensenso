@@ -52,7 +52,25 @@ Result<NxLibItem> imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular
 	return estd::error("failed to get image node: unknown image type: " + std::to_string(int(type)));
 }
 
-Result<Ensenso> Ensenso::open(std::string serial, bool connect_monocular, LogFunction logger, NxLibInitToken token) {
+Result<std::shared_ptr<Ensenso>> Ensenso::openSharedCamera(std::string serial, bool connect_monocular, LogFunction logger, NxLibInitToken token) {
+	Result<OpenCameraReturn> open_camera = Ensenso::open(serial, connect_monocular, logger, token);
+	if (!open_camera) {
+		return open_camera.error();
+	}
+
+	return std::make_shared<Ensenso>(Ensenso(std::get<0>(*open_camera),  std::get<1>(*open_camera), std::get<2>(*open_camera), std::get<3>(*open_camera)));
+}
+
+Result<Ensenso> Ensenso::openCamera(std::string serial, bool connect_monocular, LogFunction logger, NxLibInitToken token) {
+	Result<OpenCameraReturn> open_camera = Ensenso::open(serial, connect_monocular, logger, token);
+	if (!open_camera) {
+		return open_camera.error();
+	}
+
+	return Ensenso(std::get<0>(*open_camera),  std::get<1>(*open_camera), std::get<2>(*open_camera), std::get<3>(*open_camera));
+}
+
+Result<OpenCameraReturn> Ensenso::open(std::string serial, bool connect_monocular, LogFunction logger, NxLibInitToken token) {
 	NxLibItem camera_node;
 	std::optional<NxLibItem> monocular_node;
 
@@ -98,7 +116,7 @@ Result<Ensenso> Ensenso::open(std::string serial, bool connect_monocular, LogFun
 		logger(fmt::format("Opened monocular camera with serial {}", *serial_number_monocular));
 	}
 
-	return Ensenso(camera_node, monocular_node, token, logger);
+	return std::make_tuple(camera_node, monocular_node, token, logger);
 }
 
 Ensenso::~Ensenso() {
