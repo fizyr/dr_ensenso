@@ -129,7 +129,11 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 	file.exceptions(std::ios::failbit | std::ios::badbit);
 
 	Json::Value root;
-	file >> root;
+	try {
+		file >> root;
+	} catch (std::exception &e) {
+		return estd::error(fmt::format("failed to load parameters: {}", e.what()));
+	}
 
 	if (entire_tree) {
 		if (!root.isMember("Parameters")) {
@@ -138,7 +142,6 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 
 		Result<void> set_nx_json_result = setNxJson(stereo_node, Json::writeString(Json::StreamWriterBuilder(), root));
 		if (!set_nx_json_result) {
-			file.close();
 			return set_nx_json_result.error().push_description("failed to load parameters");
 		}
 
@@ -150,7 +153,6 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 
 		Result<void> set_nx_json_result = setNxJson(stereo_node[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
 		if (!set_nx_json_result) {
-			file.close();
 			return set_nx_json_result.error().push_description("failed to load parameters");
 		}
 
@@ -174,7 +176,11 @@ Result<void> Ensenso::loadMonocularParameters(std::string const parameters_file,
 	file.exceptions(std::ios::failbit | std::ios::badbit);
 
 	Json::Value root;
-	file >> root;
+	try {
+		file >> root;
+	} catch (std::exception &e) {
+		return estd::error(fmt::format("failed to load json parameters: {}", e.what()));
+	}
 
 	if (entire_tree) {
 		if (!root.isMember("Parameters")) {
@@ -558,8 +564,10 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 	}
 
 	for (int i = 0; i < samples; ++i) {
-		// TODO: Check if it should break and return message here or log the calls that did not go well.
 		Result<void> record_calibration_pattern = recordCalibrationPattern();
+		if (!record_calibration_pattern) {
+			return record_calibration_pattern.error().push_description(fmt::format("failed to detect calibration pattern: record calibration pattern failed at sample {}", i));
+		}
 	}
 
 	// Disable FlexView (should not be necessary here, but appears to be necessary for cmdEstimatePatternPose)
@@ -595,7 +603,8 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 }
 
 std::string Ensenso::getWorkspaceCalibrationFrame() {
-	// TODO: why not do this?? return getNx<std::string>(stereo_node[itmLink][itmTarget])
+	// TODO: implement return getNx<std::string>(stereo_node[itmLink][itmTarget]) . This could break code somewhere else if we returned an error here.
+
 	// Make sure the relevant nxLibItem exists and is non-empty, then return it.
 	NxLibItem item = stereo_node[itmLink][itmTarget];
 	int error;
