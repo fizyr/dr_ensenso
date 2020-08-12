@@ -44,9 +44,4 @@ Result<NxCommandError> NxCommandError::getCurrent(std::string const & what) {
 	);
 }
 
-void throwCommandError(int error, std::string const & what) {
-	if (error == NxLibExecutionFailed) throw NxCommandError::getCurrent(what);
-	throw NxError(itmExecute, error, what);
-}
-
 }

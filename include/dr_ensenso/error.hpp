@@ -36,11 +36,4 @@ public:
 	std::string const & extra() const { return what_; }
 };
 
-/// Throw a regular NxError or NxCommandError depending on the error details.
-/**
- * Must be called right after command execution so it can retrieve the error details.
- */
-void throwCommandError(int error, std::string const & what);
-
-
 }
