@@ -131,7 +131,7 @@ public:
 	/// Get the serial number of a stereo camera.
 	Result<std::string> serialNumber(NxLibItem const & item) const;
 
-	/// Get the serial number of the monocular camera or an empty string if there is no monocular camera.
+	/// Get the serial number of the monocular camera, returns an error if there is no monocular camera.
 	Result<std::string> monocularSerialNumber() const;
 
 	/// Loads the camera parameters from a JSON file.
@@ -216,13 +216,13 @@ public:
 	 * \param type Type of image to load.
 	 * \param crop_to_roi If true, crop the image using region of interest.
 	 */
-	cv::Mat loadImage(ImageType type, bool crop_to_roi = false);
+	Result<cv::Mat> loadImage(ImageType type, bool crop_to_roi = false);
 
 	/// Load an image from the camera.
 	/**
 	 * The image must have been captured, retrieved and/or processed before it can be loaded.
 	 */
-	void loadImage(
+	Result<void> loadImage(
 		ImageType type,          /// Type of the image to load.
 		std::uint8_t* buf,       /// Pre-allocated buffer to load the image into.
 		std::size_t width,       /// Width of the image to load.
@@ -238,13 +238,13 @@ public:
 	 *
 	 * \param crop_to_roi If true, crop the image using region of interest.
 	 */
-	pcl::PointCloud<pcl::PointXYZ> loadPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
+	Result<pcl::PointCloud<pcl::PointXYZ>> loadPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
 	/// Load the point cloud from the camera into a buffer.
 	/**
 	 * The point cloud must have been computed before it can be loaded.
 	 */
-	void loadPointCloudToBuffer(
+	Result<void> loadPointCloudToBuffer(
 			float* buf,              /// The buffer to load the pointcloud into.
 			std::size_t width,       /// The width of the pointcloud to load.
 			std::size_t height,      /// The height of the pointcloud to load.
@@ -257,13 +257,13 @@ public:
 	 *
 	 * \param crop_to_roi If true, crop the image using region of interest.
 	 */
-	pcl::PointCloud<pcl::PointXYZ> loadRegisteredPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
+	Result<pcl::PointCloud<pcl::PointXYZ>> loadRegisteredPointCloud(bool crop_to_roi = false); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
 	/// Load the pointcloud registered to the monocular camera.
 	/**
 	 * The point cloud must have been computed and registered before it can be loaded.
 	 */
-	void loadRegisteredPointCloudToBuffer(
+	Result<void> loadRegisteredPointCloudToBuffer(
 			float* buf,              /// The buffer to load the pointcloud into.
 			std::size_t width,       /// The width of the pointcloud to load.
 			std::size_t height,      /// The height of the pointcloud to load.
@@ -271,7 +271,7 @@ public:
 	);
 
 	/// Discards all stored calibration patterns.
-	void discardCalibrationPatterns();
+	Result<void> discardCalibrationPatterns();
 
 	/// Records a calibration pattern.
 	Result<void> recordCalibrationPattern(

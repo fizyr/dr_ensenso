@@ -31,14 +31,14 @@ Result<NxLibInitToken> NxLibInitGuard::initNxLib() {
 	if (error) {
 		// TODO: check if this is the correct error!!
 		Result<NxCommandError> nx_error = NxCommandError::getCurrent();
-		if (!nx_error) return estd::error("failed to initialize nx library.");
+		if (!nx_error) return estd::error("failed to initialize nx library");
 		return Error(nx_error->what());
 	}
 
 	return NxLibInitGuard::create_shared();
 }
 
-NxLibItem imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular, ImageType type) {
+Result<NxLibItem> imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular, ImageType type) {
 	switch (type) {
 		case ImageType::stereo_raw_left:             return stereo[itmImages][itmRaw][itmLeft];
 		case ImageType::stereo_raw_right:            return stereo[itmImages][itmRaw][itmRight];
@@ -49,7 +49,7 @@ NxLibItem imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular, ImageT
 		case ImageType::monocular_rectified:         return (*monocular)[itmImages][itmRectified];
 		case ImageType::monocular_overlay:           return (*monocular)[itmImages][itmWithOverlay];
 	}
-	throw std::runtime_error("Failed to get image node: unknown image type: " + std::to_string(int(type)));
+	return estd::error("failed to get image node: unknown image type: " + std::to_string(int(type)));
 }
 
 Result<Ensenso> Ensenso::open(std::string serial, bool connect_monocular, LogFunction logger, NxLibInitToken token) {
@@ -74,7 +74,7 @@ Result<Ensenso> Ensenso::open(std::string serial, bool connect_monocular, LogFun
 
 		// Try to find a stereo camera.
 		Result<NxLibItem> camera = openCameraBySerial(serial);
-		if (!camera) return camera.error().push_description(fmt::format("could not open an Ensenso camera with serial {}.", serial));
+		if (!camera) return camera.error().push_description(fmt::format("failed to open ensenso camera with serial {}", serial));
 
 		camera_node = *camera;
 	}
@@ -84,16 +84,16 @@ Result<Ensenso> Ensenso::open(std::string serial, bool connect_monocular, LogFun
 		logger("Looking for linked monocular camera.");
 
 		Result<std::string> serial_number = getNx<std::string>(camera_node[itmSerialNumber]);
-		if (!serial_number) serial_number.error().push_description("failed to open linked monocular camera, stereo node serial not found.");
+		if (!serial_number) serial_number.error().push_description("failed to open linked monocular camera");
 
 		// Try to find a monocula camera.
 		Result<NxLibItem> camera = openCameraByLink(serial);
-		if (!camera) return camera.error().push_description("failed to open linked monocular camera.");
+		if (!camera) return camera.error().push_description("failed to open linked monocular camera");
 
 		monocular_node = *camera;
 
 		Result<std::string> serial_number_monocular = getNx<std::string>(monocular_node.value()[itmSerialNumber]);
-		if (!serial_number_monocular) serial_number_monocular.error().push_description("failed to open linked monocular camera, stereo node monocular not found.");
+		if (!serial_number_monocular) serial_number_monocular.error().push_description("failed to open linked monocular camera");
 
 		logger(fmt::format("Opened monocular camera with serial {}", *serial_number_monocular));
 	}
@@ -123,7 +123,7 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 	file.open(parameters_file);
 
 	if (!file.good()) {
-		return estd::error("failed to load parameters, file cannot be opened.");
+		return estd::error("failed to load parameters: file can't be opened");
 	}
 
 	file.exceptions(std::ios::failbit | std::ios::badbit);
@@ -133,13 +133,13 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 
 	if (entire_tree) {
 		if (!root.isMember("Parameters")) {
-			return estd::error("failed to load parameters, requested to load an entire tree, but the input did not contain an entire tree.");
+			return estd::error("failed to load parameters: requested to load an entire tree, but the input did not contain an entire tree");
 		}
 
 		Result<void> set_nx_json_result = setNxJson(stereo_node, Json::writeString(Json::StreamWriterBuilder(), root));
 		if (!set_nx_json_result) {
 			file.close();
-			return set_nx_json_result.error().push_description("failed to load json parameters");
+			return set_nx_json_result.error().push_description("failed to load parameters");
 		}
 
 	} else {
@@ -151,7 +151,7 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 		Result<void> set_nx_json_result = setNxJson(stereo_node[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
 		if (!set_nx_json_result) {
 			file.close();
-			return set_nx_json_result.error().push_description("failed to load json parameters");
+			return set_nx_json_result.error().push_description("failed to load parameters");
 		}
 
 	}
@@ -161,14 +161,14 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 
 Result<void> Ensenso::loadMonocularParameters(std::string const parameters_file, bool entire_tree) {
 	if (!monocular_node) {
-		return estd::error("no monocular camera found. Can not load monocular camara parameters.");\
+		return estd::error("failed to load json parameters: no monocular camera found");
 	}
 
 	std::ifstream file;
 	file.open(parameters_file);
 
 	if (!file.good()) {
-		return estd::error("failed to load parameters, file cannot be opened.");
+		return estd::error("failed to load json parameters: file can't be opened");
 	}
 
 	file.exceptions(std::ios::failbit | std::ios::badbit);
@@ -178,12 +178,12 @@ Result<void> Ensenso::loadMonocularParameters(std::string const parameters_file,
 
 	if (entire_tree) {
 		if (!root.isMember("Parameters")) {
-			return estd::error("failed to load parameters, requested to load an entire tree, but the input did not contain an entire tree.");
+			return estd::error("failed to load json parameters: requested to load an entire tree, but the input did not contain an entire tree");
 		}
 
 		Result<void> set_json = setNxJson(monocular_node.value(), Json::writeString(Json::StreamWriterBuilder(), root));
 		if (!set_json) {
-			return set_json.error();
+			return set_json.error().push_description("failed to load json parameters");
 		}
 	} else {
 		if (root.isMember("Parameters")) {
@@ -193,7 +193,7 @@ Result<void> Ensenso::loadMonocularParameters(std::string const parameters_file,
 
 		Result<void> set_json = setNxJson(monocular_node.value()[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
 		if (!set_json) {
-			return set_json.error();
+			return set_json.error().push_description("failed to load json parameters");
 		}
 	}
 
@@ -202,12 +202,12 @@ Result<void> Ensenso::loadMonocularParameters(std::string const parameters_file,
 
 Result<void> Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
 	if (!monocular_node) {
-		return estd::error("No monocular camera found. Can not load monocular camera UEye parameters.");
+		return estd::error("failed to load ueye parameters: no monocular camera found");
 	}
 	NxLibCommand command(cmdLoadUEyeParameterSet);
 
 	Result<void> set_filename_param = setNx(command.parameters()[itmFilename], parameters_file);
-	if (!set_filename_param) return set_filename_param.error().push_description("failed to set filename parameter.");
+	if (!set_filename_param) return set_filename_param.error().push_description("failed to load ueye parameters");
 
 	return executeNx(command);
 }
@@ -251,22 +251,22 @@ Result<void> Ensenso::setProjector(bool state) {
 Result<void> Ensenso::setDisparityRegionOfInterest(cv::Rect const & roi) {
 	if (roi.area() == 0) {
 		Result<void> reset_disparity = setNx(stereo_node[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest], false);
-		if (!reset_disparity) return reset_disparity.error().push_description("failed to set disparity region of interest.");
+		if (!reset_disparity) return reset_disparity.error().push_description("failed to set disparity region of interest");
 
 		if (stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest].exists()) {
 			stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest].erase();
 		}
 	} else {
 		Result<void> set_disparity = setNx(stereo_node[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest], true);
-		if (!set_disparity) return set_disparity.error().push_description("failed to set disparity region of interest.");
+		if (!set_disparity) return set_disparity.error().push_description("failed to set disparity region of interest");
 		Result<void> set_tlx = setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][0],     roi.tl().x);
-		if (!set_tlx) return set_tlx.error().push_description("failed to set disparity region of interest.");
+		if (!set_tlx) return set_tlx.error().push_description("failed to set disparity region of interest");
 		Result<void> set_tly = setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1],     roi.tl().y);
-		if (!set_tly) return set_tly.error().push_description("failed to set disparity region of interest.");
+		if (!set_tly) return set_tly.error().push_description("failed to set disparity region of interest");
 		Result<void> set_rbx = setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0], roi.br().x);
-		if (!set_tly) return set_tly.error().push_description("failed to set disparity region of interest.");
+		if (!set_tly) return set_tly.error().push_description("failed to set disparity region of interest");
 		Result<void> set_rby = setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1], roi.br().y);
-		if (!set_tlx) return set_tlx.error().push_description("failed to set disparity region of interest.");
+		if (!set_tlx) return set_tlx.error().push_description("failed to set disparity region of interest");
 	}
 	return estd::in_place_valid;
 }
@@ -282,36 +282,36 @@ Result<void> Ensenso::trigger(bool stereo, bool monocular) const {
 
 	if (stereo) {
 		Result<std::string> serial_number = serialNumber();
-		if (!serial_number) return serial_number.error().push_description("could not find serial number for stereo camera.");
+		if (!serial_number) return serial_number.error().push_description("failed to trigger: could not find serial number for stereo camera");
 		stereo_serial_number = *serial_number;
 
 		log(fmt::format(" - {}", stereo_serial_number));
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][0], stereo_serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to set camera parameter.");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to trigger: could not set camera parameter");
 	}
 
 	if (monocular) {
 		Result<std::string> serial_number = serialNumber(*monocular_node);
-		if (!serial_number) return serial_number.error().push_description("could not find serial number for monocular camera.");
+		if (!serial_number) return serial_number.error().push_description("failed to trigger: could not find monocular serial number");
 		mono_serial_number = *serial_number;
 
 		log(fmt::format(" - {}", mono_serial_number));
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][stereo ? 1 : 0], mono_serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to set camera parameter.");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to trigger: coudl not set camera parameter");
 	}
 
 	Result<void> execute_trigger = executeNx(command);
-	if (!execute_trigger) return execute_trigger.error().push_description("failed to execute trigger command.");
+	if (!execute_trigger) return execute_trigger.error().push_description("failed to execute trigger command");
 
 	if (stereo) {
 		Result<bool> get_triggered = getNx<bool>(command.result()[stereo_serial_number][itmTriggered]);
-		if (!get_triggered && !*get_triggered) return get_triggered.error().push_description("stereo camera was not triggered.");
+		if (!get_triggered && !*get_triggered) return get_triggered.error().push_description("failed to trigger: stereo camera was not triggered");
 	}
 	if (monocular) {
 		Result<bool> get_triggered = getNx<bool>(command.result()[mono_serial_number][itmTriggered]);
-		if (!get_triggered && !*get_triggered) return get_triggered.error().push_description("monocular camera was not triggered.");
+		if (!get_triggered && !*get_triggered) return get_triggered.error().push_description("failed to trigger: monocular camera was not triggered");
 	}
 
 	return estd::in_place_valid;
@@ -449,11 +449,16 @@ std::optional<cv::Rect> Ensenso::getOptionalRoi() {
 	return *get_roi_result;
 }
 
-cv::Mat Ensenso::loadImage(ImageType type, bool crop_to_roi) {
-	return toCvMat(imageNode(stereo_node, monocular_node, type), crop_to_roi ? getOptionalRoi() : std::nullopt);
+Result<cv::Mat> Ensenso::loadImage(ImageType type, bool crop_to_roi) {
+	Result<NxLibItem> image_node = imageNode(stereo_node, monocular_node, type);
+	if (!image_node) {
+		return image_node.error().push_description("failed to load image");
+	}
+
+	return toCvMat(*image_node, crop_to_roi ? getOptionalRoi() : std::nullopt);
 }
 
-void Ensenso::loadImage(
+Result<void> Ensenso::loadImage(
 	ImageType type,
 	std::uint8_t * pointer,
 	std::size_t width,
@@ -461,8 +466,13 @@ void Ensenso::loadImage(
 	int cv_type,
 	bool crop_to_roi
 ) {
-	toCvMat(
-		imageNode(stereo_node, monocular_node, type),
+	Result<NxLibItem> image_node = imageNode(stereo_node, monocular_node, type);
+	if (!image_node) {
+		return image_node.error().push_description("failed to load image");
+	}
+
+	return toCvMat(
+		*image_node,
 		pointer,
 		width,
 		height,
@@ -471,25 +481,25 @@ void Ensenso::loadImage(
 	);
 }
 
-pcl::PointCloud<pcl::PointXYZ> Ensenso::loadPointCloud(bool crop_to_roi) {
+Result<pcl::PointCloud<pcl::PointXYZ>> Ensenso::loadPointCloud(bool crop_to_roi) {
 	// Convert the binary data to a point cloud.
 	return toPointCloud(stereo_node[itmImages][itmPointMap], crop_to_roi ? getOptionalRoi() : std::nullopt);
 }
 
-void Ensenso::loadPointCloudToBuffer(float* buf, std::size_t width, std::size_t height, bool crop_to_roi) {
-	pointCloudToBuffer(stereo_node[itmImages][itmPointMap], "", buf, width, height, crop_to_roi ? getOptionalRoi() : std::nullopt);
+Result<void> Ensenso::loadPointCloudToBuffer(float* buf, std::size_t width, std::size_t height, bool crop_to_roi) {
+	return pointCloudToBuffer(stereo_node[itmImages][itmPointMap], "", buf, width, height, crop_to_roi ? getOptionalRoi() : std::nullopt);
 }
 
-pcl::PointCloud<pcl::PointXYZ> Ensenso::loadRegisteredPointCloud(bool crop_to_roi) {
+Result<pcl::PointCloud<pcl::PointXYZ>> Ensenso::loadRegisteredPointCloud(bool crop_to_roi) {
 	return toPointCloud(root[itmImages][itmRenderPointMap], crop_to_roi ? getOptionalRoi() : std::nullopt);
 }
 
-void Ensenso::loadRegisteredPointCloudToBuffer(float* buf, std::size_t width, std::size_t height, bool crop_to_roi) {
-	pointCloudToBuffer(root[itmImages][itmRenderPointMap], "", buf, width, height, crop_to_roi ? getOptionalRoi() : std::nullopt);
+Result<void> Ensenso::loadRegisteredPointCloudToBuffer(float* buf, std::size_t width, std::size_t height, bool crop_to_roi) {
+	return pointCloudToBuffer(root[itmImages][itmRenderPointMap], "", buf, width, height, crop_to_roi ? getOptionalRoi() : std::nullopt);
 }
 
-void Ensenso::discardCalibrationPatterns() {
-	executeNx(NxLibCommand(cmdDiscardPatterns));
+Result<void> Ensenso::discardCalibrationPatterns() {
+	return executeNx(NxLibCommand(cmdDiscardPatterns));
 }
 
 Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_info, std::string * result_dump_info) {
@@ -508,16 +518,16 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 	setProjector(true);
 
 	Result<std::string> serial_number_result = serialNumber();
-	if (!serial_number_result) return serial_number_result.error().push_description("could not find serial number for stereo camera.");
+	if (!serial_number_result) return serial_number_result.error().push_description("failed to record calibration pattern: could not find serial number for stereo camera");
 
 	// Find the pattern.
 	NxLibCommand command_collect_pattern(cmdCollectPattern);
 
 	Result<void> set_camera_param = setNx(command_collect_pattern.parameters()[itmCameras], *serial_number_result);
-	if (!set_camera_param) return set_camera_param.error().push_description("failed to set camera parameter.");
+	if (!set_camera_param) return set_camera_param.error().push_description("failed to record calibration pattern: failed to set camera parameter");
 
 	Result<void> set_decode_data_param = setNx(command_collect_pattern.parameters()[itmDecodeData], true);
-	if (!set_decode_data_param) return set_decode_data_param.error().push_description("failed to set decode data parameter.");
+	if (!set_decode_data_param) return set_decode_data_param.error().push_description("failed to record calibration pattern: failed to set decode data parameter");
 
 	// Optionally copy the parameters for debugging.
 	if (parameters_dump_info) *parameters_dump_info = command_collect_pattern.parameters().asJson(true);
@@ -527,7 +537,7 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 		// TODO:Why do this???
 		// Optionally copy the result for debugging.
 		if (result_dump_info) *result_dump_info = command_collect_pattern.result().asJson(true);
-		return execute_collect_pattern.error().push_description("failed to execute collect pattern command.");
+		return execute_collect_pattern.error().push_description("failed to execute collect pattern command");
 	}
 
 	// restore FlexView setting
@@ -542,10 +552,14 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 }
 
 Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, bool ignore_calibration)  {
-	discardCalibrationPatterns();
+	Result<void> discard_calibration_patterns = discardCalibrationPatterns();
+	if (!discard_calibration_patterns) {
+		return discard_calibration_patterns.error().push_description("failed to detect calibration pattern");
+	}
 
 	for (int i = 0; i < samples; ++i) {
-		recordCalibrationPattern();
+		// TODO: Check if it should break and return message here or log the calls that did not go well.
+		Result<void> record_calibration_pattern = recordCalibrationPattern();
 	}
 
 	// Disable FlexView (should not be necessary here, but appears to be necessary for cmdEstimatePatternPose)
@@ -556,7 +570,7 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 	// Get the pose of the pattern.
 	NxLibCommand command_estimate_pose(cmdEstimatePatternPose);
 	Result<void> execute_estimate = executeNx(command_estimate_pose);
-	if (!execute_estimate) return execute_estimate.error().push_description("failed to execute nxlib command");
+	if (!execute_estimate) return execute_estimate.error().push_description("failed to execute estimate pose command");
 
 	// TODO:To this if execute fails as well??
 	// Restore FlexView setting.
@@ -565,7 +579,7 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 	}
 
 	Result<Eigen::Isometry3d> eigen_isometry = toEigenIsometry(command_estimate_pose.result()["Patterns"][0][itmPatternPose]);
-	if (!eigen_isometry) return eigen_isometry.error().push_description("failed to detect calibration pattern.");
+	if (!eigen_isometry) return eigen_isometry.error().push_description("failed to detect calibration pattern: eigen isometry not found");
 
 	eigen_isometry->translation() *= 0.001;
 
@@ -591,11 +605,11 @@ std::string Ensenso::getWorkspaceCalibrationFrame() {
 
 Result<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
 	// Check if the camera is calibrated.
-	if (getWorkspaceCalibrationFrame().empty()) return estd::error("failed to retrieve workspace calibration.");
+	if (getWorkspaceCalibrationFrame().empty()) return estd::error("failed to retrieve workspace calibration: workspace calibration frame not set");
 
 	// convert from mm to m
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(stereo_node[itmLink]);
-	if (!pose) return pose.error().push_description("failed to retrieve workspace calibration.");
+	if (!pose) return pose.error().push_description("failed to retrieve workspace calibration: pose not found");
 	pose->translation() *= 0.001;
 
 	return pose;
@@ -628,12 +642,12 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 
 	// setup (camera in hand / camera fixed)
 	Result<void> set_setup_param = setNx(calibrate.parameters()[itmSetup], moving ? valMoving : valFixed);
-	if (!set_setup_param) return set_setup_param.error().push_description("failed to compute calibration, could not set setup parameter.");
+	if (!set_setup_param) return set_setup_param.error().push_description("failed to compute calibration: could not set setup parameter");
 
 	// name of the target coordinate system
 	if (target != "") {
 		Result<void> set_target_param = setNx(calibrate.parameters()[itmTarget], target);
-		if (!set_target_param) return set_target_param.error().push_description("failed to compute calibration, could not set target parameter.");
+		if (!set_target_param) return set_target_param.error().push_description("failed to compute calibration: could not set target parameter");
 	}
 
 	// copy robot poses to parameters
@@ -642,7 +656,7 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 		scaled_robot_pose.translation() *= 1000;
 		Result<void> set_transform_param = setNx(calibrate.parameters()[itmTransformations][i], scaled_robot_pose);
 		if (!set_transform_param) {
-			return set_transform_param.error().push_description(fmt::format("failed to compute calibration, could not set transform parameter {} .", i));
+			return set_transform_param.error().push_description(fmt::format("failed to compute calibration: could not set transform parameter {} ", i));
 		}
 	}
 
@@ -652,16 +666,16 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	Result<void> execute_calibrate = executeNx(calibrate);
 	if (!execute_calibrate) {
 		if (result_dump_info) *result_dump_info = calibrate.result().asJson(true);
-		return execute_calibrate.error().push_description("failed to compute calibration, could not execute calibrate command.");
+		return execute_calibrate.error().push_description("failed to execute calibrate command");
 	}
 
 	// return result (camera pose, pattern pose, iterations, reprojection error)
 	Result<Eigen::Isometry3d> camera_pose  = toEigenIsometry(stereo_node[itmLink]);
-	if (!camera_pose) camera_pose.error().push_description("failed to compute calibration, camera pose not found.");
+	if (!camera_pose) camera_pose.error().push_description("failed to compute calibration: camera pose not found");
 	camera_pose->inverse(); // "Link" is inverted
 
 	Result<Eigen::Isometry3d> pattern_pose = toEigenIsometry(calibrate.result()[itmPatternPose]);
-	if (!pattern_pose) pattern_pose.error().push_description("failed to compute calibration, pattern pose not found.");
+	if (!pattern_pose) pattern_pose.error().push_description("failed to compute calibration: pattern pose not found");
 
 	camera_pose->translation()  *= 0.001;
 	pattern_pose->translation() *= 0.001;
@@ -670,10 +684,10 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	if (result_dump_info) *result_dump_info = calibrate.result().asJson(true);
 
 	Result<int> iterations = getNx<int>(calibrate.result()[itmIterations]);
-	if (!iterations) return iterations.error().push_description("failed to compute calibration, iterations not found.");
+	if (!iterations) return iterations.error().push_description("failed to compute calibration: iterations not found");
 
 	Result<double> residual = getNx<double>(calibrate.result()[itmResidual]);
-	if (!residual) return residual.error().push_description("failed to compute calibration, residual not found.");
+	if (!residual) return residual.error().push_description("failed to compute calibration: residual not found");
 
 	return Ensenso::CalibrationResult{
 		*camera_pose,
@@ -687,31 +701,31 @@ Result<void> Ensenso::setWorkspaceCalibration(Eigen::Isometry3d const & workspac
 	NxLibCommand command(cmdCalibrateWorkspace);
 
 	Result<std::string> serial_number = serialNumber();
-	if (!serial_number) return serial_number.error().push_description("failed to set workspace calibration, could not find camera serial number.");
+	if (!serial_number) return serial_number.error().push_description("failed to set workspace calibration: could not find camera serial number");
 
 	Result<void> set_camera_param = setNx(command.parameters()[itmCameras][0], *serial_number);
-	if (!set_camera_param) return set_camera_param.error().push_description("failed to set workspace calibration, could not set camera parameter.");
+	if (!set_camera_param) return set_camera_param.error().push_description("failed to set workspace calibration: could not set camera parameter");
 
 	// scale to [mm]
 	Eigen::Isometry3d workspace_mm = workspace;
 	workspace_mm.translation() *= 1000;
 
 	Result<void> set_pattern_pose_param = setNx(command.parameters()[itmPatternPose], workspace_mm);
-	if (!set_pattern_pose_param) return set_pattern_pose_param.error().push_description("failed to set workspace calibration, could not set pattern pose parameter.");
+	if (!set_pattern_pose_param) return set_pattern_pose_param.error().push_description("failed to set workspace calibration: could not set pattern pose parameter");
 
 	if (frame_id != "") {
 		Result<void> set_target_param = setNx(command.parameters()[itmTarget], frame_id);
-		if (!set_target_param) return set_target_param.error().push_description("failed to set workspace calibration, could not set target parameter.");
+		if (!set_target_param) return set_target_param.error().push_description("failed to set workspace calibration: could not set target parameter");
 	}
 
 	Eigen::Isometry3d defined_pose_mm = defined_pose;
 	defined_pose_mm.translation() *= 1000;
 
 	Result<void> set_defined_pose_param = setNx(command.parameters()[itmDefinedPose], defined_pose_mm);
-	if (!set_defined_pose_param) return set_defined_pose_param.error().push_description("failed to set workspace calibration, could not set defined pose parameter.");
+	if (!set_defined_pose_param) return set_defined_pose_param.error().push_description("failed to set workspace calibration: could not set defined pose parameter");
 
 	Result<void> execute_calibrate_workspace = executeNx(command);
-	if (!execute_calibrate_workspace) return execute_calibrate_workspace.error().push_description("failed to execute calibrate workspace command.");
+	if (!execute_calibrate_workspace) return execute_calibrate_workspace.error().push_description("failed to execute calibrate workspace command");
 
 	if (store) storeWorkspaceCalibration();
 
@@ -721,28 +735,28 @@ Result<void> Ensenso::setWorkspaceCalibration(Eigen::Isometry3d const & workspac
 Result<void> Ensenso::clearWorkspaceCalibration(bool store) {
 	// Check if the camera is calibrated.
 	// TODO: check if we should return an error here.
-	if (getWorkspaceCalibrationFrame().empty()) return estd::error("camera is not calibrated.");
+	if (getWorkspaceCalibrationFrame().empty()) return estd::error("failed to clear workspace calibration: workspace calibration frame not set");
 
 	// calling CalibrateWorkspace with no PatternPose and DefinedPose clears the workspace.
 	NxLibCommand command(cmdCalibrateWorkspace);
 
 	Result<std::string> serial_number = serialNumber();
-	if (!serial_number) return serial_number.error().push_description("failed to clear workspace calibration, could not find camera serial number.");
+	if (!serial_number) return serial_number.error().push_description("failed to clear workspace calibration: could not find camera serial number");
 
 	Result<void> set_camera_param = setNx(command.parameters()[itmCameras][0], *serial_number);
-	if (!set_camera_param) return set_camera_param.error().push_description("failed to clear workspace calibration, could not set camera parameter.");
+	if (!set_camera_param) return set_camera_param.error().push_description("failed to clear workspace calibration: could not set camera parameter");
 
 	Result<void> set_target_param = setNx(command.parameters()[itmTarget], "");
-	if (!set_target_param) return set_target_param.error().push_description("failed to clear workspace calibration, could not set target parameter.");
+	if (!set_target_param) return set_target_param.error().push_description("failed to clear workspace calibration: could not set target parameter");
 
 	Result<void> execute_calibrate_workspace = executeNx(command);
-	if (!execute_calibrate_workspace) return execute_calibrate_workspace.error().push_description("failed to execute calibrate workspace command.");
+	if (!execute_calibrate_workspace) return execute_calibrate_workspace.error().push_description("failed to execute calibrate workspace command");
 
 	// clear target name
 	// TODO: Can be removed after settings the target parameter above?
 	// TODO: Should test that.
 	Result<void> set_stereo_node_target = setNx(stereo_node[itmLink][itmTarget], "");;
-	if (!set_stereo_node_target) return set_stereo_node_target.error().push_description("failed to clear workspace calibration, could not set stereo_node target.");
+	if (!set_stereo_node_target) return set_stereo_node_target.error().push_description("failed to clear workspace calibration: could not set stereo_node target");
 
 	if (store) storeWorkspaceCalibration();
 
@@ -753,13 +767,13 @@ Result<void> Ensenso::storeWorkspaceCalibration() {
 	NxLibCommand command(cmdStoreCalibration);
 
 	Result<std::string> serial_number = serialNumber();
-	if (!serial_number) return serial_number.error().push_description("failed to store workspace calibration, could not find camera serial number.");
+	if (!serial_number) return serial_number.error().push_description("failed to store workspace calibration: could not find camera serial number");
 
 	Result<void> set_camera_param = setNx(command.parameters()[itmCameras][0], *serial_number);
-	if (!set_camera_param) return set_camera_param.error().push_description("failed to store workspace calibration, could not set camera parameter.");
+	if (!set_camera_param) return set_camera_param.error().push_description("failed to store workspace calibration: could not set camera parameter");
 
 	Result<void> set_link_param = setNx(command.parameters()[itmLink], true);
-	if (!set_link_param) return set_link_param.error().push_description("failed to store workspace calibration, could not set link parameter.");
+	if (!set_link_param) return set_link_param.error().push_description("failed to store workspace calibration: could not set link parameter");
 
 	return executeNx(command);
 }
@@ -768,7 +782,7 @@ Result<void> Ensenso::storeWorkspaceCalibration() {
 Result<Eigen::Isometry3d> Ensenso::getMonocularLink() const {
 	// convert from mm to m
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(monocular_node.value()[itmLink]);
-	if (!pose) return pose.error().push_description("failed to get monocular link, could not retrieve pose.");
+	if (!pose) return pose.error().push_description("failed to get monocular link: could not retrieve pose");
 
 	pose->translation() *= 0.001;
 
