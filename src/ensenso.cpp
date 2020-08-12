@@ -148,7 +148,7 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 			root = root["Parameters"];
 		}
 
-		Result<void> set_nx_json_result =setNxJson(stereo_node[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
+		Result<void> set_nx_json_result = setNxJson(stereo_node[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
 		if (!set_nx_json_result) {
 			file.close();
 			return set_nx_json_result.error().push_description("failed to load json parameters");
@@ -159,14 +159,16 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 	return estd::in_place_valid;
 }
 
-bool Ensenso::loadMonocularParameters(std::string const parameters_file, bool entire_tree) {
-	if (!monocular_node) throw std::runtime_error("No monocular camera found. Can not load monocular camara parameters.");
+Result<void> Ensenso::loadMonocularParameters(std::string const parameters_file, bool entire_tree) {
+	if (!monocular_node) {
+		return estd::error("no monocular camera found. Can not load monocular camara parameters.");\
+	}
 
 	std::ifstream file;
 	file.open(parameters_file);
 
 	if (!file.good()) {
-		return false;
+		return estd::error("failed to load parameters, file cannot be opened.");
 	}
 
 	file.exceptions(std::ios::failbit | std::ios::badbit);
@@ -176,14 +178,12 @@ bool Ensenso::loadMonocularParameters(std::string const parameters_file, bool en
 
 	if (entire_tree) {
 		if (!root.isMember("Parameters")) {
-			// Requested to load an entire tree, but the input did not contain an entire tree.
-			return false;
+			return estd::error("failed to load parameters, requested to load an entire tree, but the input did not contain an entire tree.");
 		}
 
-		try {
-			setNxJson(monocular_node.value(), Json::writeString(Json::StreamWriterBuilder(), root));
-		} catch (std::runtime_error & e) {
-			return false;
+		Result<void> set_json = setNxJson(monocular_node.value(), Json::writeString(Json::StreamWriterBuilder(), root));
+		if (!set_json) {
+			return set_json.error();
 		}
 	} else {
 		if (root.isMember("Parameters")) {
@@ -191,21 +191,25 @@ bool Ensenso::loadMonocularParameters(std::string const parameters_file, bool en
 			root = root["Parameters"];
 		}
 
-		try {
-			setNxJson(monocular_node.value()[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
-		} catch (std::runtime_error & e) {
-			return false;
+		Result<void> set_json = setNxJson(monocular_node.value()[itmParameters], Json::writeString(Json::StreamWriterBuilder(), root));
+		if (!set_json) {
+			return set_json.error();
 		}
 	}
 
-	return true;
+	return estd::in_place_valid;
 }
 
-void Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
-	if (!monocular_node) throw std::runtime_error("No monocular camera found. Can not load monocular camera UEye parameters.");
+Result<void> Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
+	if (!monocular_node) {
+		return estd::error("No monocular camera found. Can not load monocular camera UEye parameters.");
+	}
 	NxLibCommand command(cmdLoadUEyeParameterSet);
-	setNx(command.parameters()[itmFilename], parameters_file);
-	executeNx(command);
+
+	Result<void> set_filename_param = setNx(command.parameters()[itmFilename], parameters_file);
+	if (!set_filename_param) return set_filename_param.error().push_description("failed to set filename parameter.");
+
+	return executeNx(command);
 }
 
 bool Ensenso::hasFlexView() const {
@@ -216,53 +220,55 @@ Result<int> Ensenso::flexView() const {
 	return getNx<int>(stereo_node[itmParameters][itmCapture][itmFlexView]);
 }
 
-void Ensenso::setFlexView(int value) {
+Result<void> Ensenso::setFlexView(int value) {
 	log(fmt::format("Setting flex view to {}", value));
-	setNx(stereo_node[itmParameters][itmCapture][itmFlexView], value);
+	return setNx(stereo_node[itmParameters][itmCapture][itmFlexView], value);
 }
 
 bool Ensenso::hasFrontLight() const {
 	return stereo_node[itmParameters][itmCapture][itmFrontLight].exists();
 }
 
-std::optional<bool> Ensenso::frontLight() {
-	NxLibItem item = stereo_node[itmParameters][itmCapture][itmFrontLight];
-	if (!item.exists()) return std::nullopt;
-
-	Result<bool> get_nx_result = getNx<bool>(item);
-	if (!get_nx_result) return std::nullopt;
-
-	return *get_nx_result;
+Result<bool> Ensenso::frontLight() {
+	return getNx<bool>(stereo_node[itmParameters][itmCapture][itmFrontLight]);
 }
 
-void Ensenso::setFrontLight(bool state) {
+Result<void> Ensenso::setFrontLight(bool state) {
 	log(fmt::format("Turning front light {}", state ? "on" : "off"));
-	setNx(stereo_node[itmParameters][itmCapture][itmFrontLight], state);
+
+	return setNx(stereo_node[itmParameters][itmCapture][itmFrontLight], state);
 }
 
 Result<bool> Ensenso::projector() {
 	return getNx<bool>(stereo_node[itmParameters][itmCapture][itmProjector]);
 }
 
-void Ensenso::setProjector(bool state) {
+Result<void> Ensenso::setProjector(bool state) {
 	log(fmt::format("Turning projector {}", state ? "on" : "off"));
-	setNx(stereo_node[itmParameters][itmCapture][itmProjector], state);
+	return setNx(stereo_node[itmParameters][itmCapture][itmProjector], state);
 }
 
-void Ensenso::setDisparityRegionOfInterest(cv::Rect const & roi) {
+Result<void> Ensenso::setDisparityRegionOfInterest(cv::Rect const & roi) {
 	if (roi.area() == 0) {
-		setNx(stereo_node[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest], false);
+		Result<void> reset_disparity = setNx(stereo_node[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest], false);
+		if (!reset_disparity) return reset_disparity.error().push_description("failed to set disparity region of interest.");
 
 		if (stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest].exists()) {
 			stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest].erase();
 		}
 	} else {
-		setNx(stereo_node[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest],          true);
-		setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][0],     roi.tl().x);
-		setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1],     roi.tl().y);
-		setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0], roi.br().x);
-		setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1], roi.br().y);
+		Result<void> set_disparity = setNx(stereo_node[itmParameters][itmCapture][itmUseDisparityMapAreaOfInterest], true);
+		if (!set_disparity) return set_disparity.error().push_description("failed to set disparity region of interest.");
+		Result<void> set_tlx = setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][0],     roi.tl().x);
+		if (!set_tlx) return set_tlx.error().push_description("failed to set disparity region of interest.");
+		Result<void> set_tly = setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1],     roi.tl().y);
+		if (!set_tly) return set_tly.error().push_description("failed to set disparity region of interest.");
+		Result<void> set_rbx = setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0], roi.br().x);
+		if (!set_tly) return set_tly.error().push_description("failed to set disparity region of interest.");
+		Result<void> set_rby = setNx(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1], roi.br().y);
+		if (!set_tlx) return set_tlx.error().push_description("failed to set disparity region of interest.");
 	}
+	return estd::in_place_valid;
 }
 
 Result<void> Ensenso::trigger(bool stereo, bool monocular) const {

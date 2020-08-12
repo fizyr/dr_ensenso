@@ -138,10 +138,10 @@ public:
 	Result<void> loadParameters(std::string const parameters_file, bool entire_tree = false);
 
 	/// Loads the monocular camera parameters from a JSON file. Returns false if file was not found.
-	bool loadMonocularParameters(std::string const parameters_file, bool entire_tree = false);
+	Result<void> loadMonocularParameters(std::string const parameters_file, bool entire_tree = false);
 
 	/// Loads the monocular camera uEye parameters from a INI file. Returns false if file was not found.
-	void loadMonocularUeyeParameters(std::string const parameters_file);
+	Result<void> loadMonocularUeyeParameters(std::string const parameters_file);
 
 	/// Check if the camera has a FlexView parameter.
 	bool hasFlexView() const;
@@ -150,28 +150,28 @@ public:
 	Result<int> flexView() const;
 
 	/// Sets the Ensenso camera FlexView value.
-	void setFlexView(int value);
+	Result<void> setFlexView(int value);
 
 	/// Check if the camera has a front light.
 	bool hasFrontLight() const;
 
 	/// Get the front light setting (on or off).
-	std::optional<bool> frontLight();
+	Result<bool> frontLight();
 
 	/// Sets the front light on or off.
-	void setFrontLight(bool state);
+	Result<void> setFrontLight(bool state);
 
 	/// Get the projector setting (on or off).
 	Result<bool> projector();
 
 	/// Sets the projector on or off.
-	void setProjector(bool state);
+	Result<void> setProjector(bool state);
 
 	/// Set the region of interest for the disparity map (and thereby depth / point cloud).
 	/**
 	 * An empty (default constructed) rect clears the ROI.
 	 */
-	void setDisparityRegionOfInterest(cv::Rect const & roi);
+	Result<void> setDisparityRegionOfInterest(cv::Rect const & roi);
 
 	/// Trigger data acquisition on the camera.
 	/**
