@@ -1,4 +1,7 @@
 #pragma once
+
+#include "types.hpp"
+
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <ensenso/nxLib.h>
@@ -9,16 +12,13 @@
 namespace dr {
 
 /// Convert an NxLibItem to a cv::Mat.
-/**
- * \throw NxError on failure.
- */
-pcl::PointCloud<pcl::PointXYZ> toPointCloud(NxLibItem const & item, std::optional<cv::Rect> roi = std::nullopt, std::string const & what = ""); // TODO: Remove (inc. PCL dependency) when not used anymore.
+Result<pcl::PointCloud<pcl::PointXYZ>> toPointCloud(NxLibItem const & item, std::optional<cv::Rect> roi = std::nullopt, std::string const & what = ""); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
 /// Load the point cloud from the camera into a buffer.
 /**
  * The point cloud must have been computed before it can be loaded.
  */
-void pointCloudToBuffer(
+Result<void> pointCloudToBuffer(
 	NxLibItem const & item,
 	std::string const & what,
 	float* buf,         /// The buffer to load the pointcloud into.
