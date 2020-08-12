@@ -87,7 +87,7 @@ Result<Ensenso> Ensenso::open(std::string serial, bool connect_monocular, LogFun
 		if (!serial_number) serial_number.error().push_description("failed to open linked monocular camera");
 
 		// Try to find a monocula camera.
-		Result<NxLibItem> camera = openCameraByLink(serial);
+		Result<NxLibItem> camera = openCameraByLink(*serial_number);
 		if (!camera) return camera.error().push_description("failed to open linked monocular camera");
 
 		monocular_node = *camera;
@@ -355,11 +355,11 @@ Result<void> Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, 
 
 	if (stereo) {
 		Result<bool> get_retrieved = getNx<bool>(command.result()[stereo_serial_number][itmRetrieved]);
-		if (!get_retrieved) return get_retrieved.error().push_description("failed to retrieve stereo results");
+		if (!get_retrieved && !*get_retrieved) return get_retrieved.error().push_description("failed to retrieve stereo results");
 	}
 	if (monocular) {
 		Result<bool> get_retrieved = getNx<bool>(command.result()[mono_serial_number][itmRetrieved]);
-		if (!get_retrieved) return get_retrieved.error().push_description("failed to retrieve monocular results");
+		if (!get_retrieved && !*get_retrieved) return get_retrieved.error().push_description("failed to retrieve monocular results");
 	}
 
 	return estd::in_place_valid;
@@ -410,6 +410,10 @@ Result<void> Ensenso::computePointCloud() {
 }
 
 Result<void> Ensenso::registerPointCloud() {
+	if (!monocular_node) {
+		return estd::error("failed to register point cloud: monocular camera is not attached");
+	}
+
 	NxLibCommand command(cmdRenderPointMap);
 
 	Result<std::string> serial_number = monocularSerialNumber();
@@ -435,13 +439,13 @@ Result<cv::Rect> Ensenso::getRoi() {
 	Result<int> tly = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmLeftTop][1]);
 	if (!tly) return tly.error();
 
-	// As opencv requires exclusive right and bottom boundaries, we increment by 1.
 	Result<int> rbx = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][0]);
 	if (!rbx) return rbx.error();
 
 	Result<int> rby = getNx<int>(stereo_node[itmParameters][itmDisparityMap][itmAreaOfInterest][itmRightBottom][1]);
 	if (!rby) return rby.error();
 
+	// As opencv requires exclusive right and bottom boundaries, we increment by 1.
 	return cv::Rect{cv::Point2i{*tlx, *tly}, cv::Point2i{*rbx + 1, *rby + 1}};
 }
 
@@ -732,7 +736,10 @@ Result<void> Ensenso::setWorkspaceCalibration(Eigen::Isometry3d const & workspac
 	Result<void> execute_calibrate_workspace = executeNx(command);
 	if (!execute_calibrate_workspace) return execute_calibrate_workspace.error().push_description("failed to execute calibrate workspace command");
 
-	if (store) storeWorkspaceCalibration();
+	if (store) {
+		Result<void> store_workspace_calibration = storeWorkspaceCalibration();
+		if (!store_workspace_calibration) return store_workspace_calibration.error().push_description("failed to set workspace calibration");
+	}
 
 	return estd::in_place_valid;
 }
@@ -763,7 +770,10 @@ Result<void> Ensenso::clearWorkspaceCalibration(bool store) {
 	Result<void> set_stereo_node_target = setNx(stereo_node[itmLink][itmTarget], "");;
 	if (!set_stereo_node_target) return set_stereo_node_target.error().push_description("failed to clear workspace calibration: could not set stereo_node target");
 
-	if (store) storeWorkspaceCalibration();
+	if (store) {
+		Result<void> store_workspace_calibration = storeWorkspaceCalibration();
+		if (!store_workspace_calibration) return store_workspace_calibration.error().push_description("failed to clear workspace calibration");
+	}
 
 	return estd::in_place_valid;
 }
