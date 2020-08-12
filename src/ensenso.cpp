@@ -321,7 +321,7 @@ Result<void> Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, 
 	monocular = monocular && monocular_node;
 
 	// nothing to do?
-	if (!stereo && !monocular) return estd::error("neither stereo or monucular is specified.");
+	if (!stereo && !monocular) return estd::error("failed to retrieve: neither stereo or monucular is specified");
 
 	std::string stereo_serial_number = "";
 	std::string mono_serial_number = "";
@@ -329,35 +329,35 @@ Result<void> Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, 
 	NxLibCommand command(trigger ? cmdCapture : cmdRetrieve);
 
 	Result<void> set_timeout_param = setNx(command.parameters()[itmTimeout], int(timeout));
-	if (!set_timeout_param) return set_timeout_param.error().push_description("failed to set timeout parameter.");
+	if (!set_timeout_param) return set_timeout_param.error().push_description("failed to retrieve: could not set timeout parameter");
 
 	if (stereo) {
 		Result<std::string> serial_number = serialNumber();
-		if (!serial_number) return serial_number.error().push_description("could not find serial number for stereo camera.");
+		if (!serial_number) return serial_number.error().push_description("failed to retrieve: could not find stereo camera");
 		stereo_serial_number = *serial_number;
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][0], stereo_serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to set stereo camera parameter.");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to retrieve: could not set stereo camera parameter");
 	}
 	if (monocular) {
 		Result<std::string> serial_number = serialNumber(*monocular_node);
-		if (!serial_number) return serial_number.error().push_description("could not find monocular camera serial number.");
+		if (!serial_number) return serial_number.error().push_description("failed to retrieve: could not find monocular camera");
 		mono_serial_number = *serial_number;
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][stereo ? 1 : 0], mono_serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to set monocular camera parameter.");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to retrieve: could not set monocular camera parameter");
 	}
 
 	Result<void> execute_retrieve = executeNx(command);
-	if (!execute_retrieve) return execute_retrieve.error().push_description("failed to execute retrieve command.");
+	if (!execute_retrieve) return execute_retrieve.error().push_description("failed to execute retrieve command");
 
 	if (stereo) {
 		Result<bool> get_retrieved = getNx<bool>(command.result()[stereo_serial_number][itmRetrieved]);
-		if (!get_retrieved) return get_retrieved.error().push_description("failed to retrieve stereo results.");
+		if (!get_retrieved) return get_retrieved.error().push_description("failed to retrieve stereo results");
 	}
 	if (monocular) {
 		Result<bool> get_retrieved = getNx<bool>(command.result()[mono_serial_number][itmRetrieved]);
-		if (!get_retrieved) return get_retrieved.error().push_description("failed to retrieve monocular results.");
+		if (!get_retrieved) return get_retrieved.error().push_description("failed to retrieve monocular results");
 	}
 
 	return estd::in_place_valid;
@@ -367,17 +367,17 @@ Result<void> Ensenso::rectifyImages(bool stereo, bool monocular) {
 	NxLibCommand command(cmdRectifyImages);
 	if (stereo) {
 		Result<std::string> serial_number = serialNumber();
-		if (!serial_number) return serial_number.error().push_description("failed to rectify stereo camera.");
+		if (!serial_number) return serial_number.error().push_description("failed to rectify stereo camera");
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][0], *serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to set stereo camera parameter.");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to rectify stereo camera");
 	}
 	if (monocular) {
 		Result<std::string> serial_number = monocularSerialNumber();
-		if (!serial_number) return serial_number.error().push_description("failed to rectify monocular camera.");
+		if (!serial_number) return serial_number.error().push_description("failed to rectify monocular camera");
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][stereo ? 1 : 0], *serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to set monocular camera parameter.");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to rectify monocular camera");
 	}
 
 	return executeNx(command);
@@ -387,10 +387,10 @@ Result<void> Ensenso::computeDisparity() {
 	NxLibCommand command(cmdComputeDisparityMap);
 
 	Result<std::string> serial_number = serialNumber();
-	if (!serial_number) return serial_number.error().push_description("failed to compute disparity, could not find camera serial number.");
+	if (!serial_number) return serial_number.error().push_description("failed to compute disparity: could not find camera serial number");
 
 	Result<void> set_camera_param = setNx(command.parameters()[itmCameras], *serial_number);
-	if (!set_camera_param) return set_camera_param.error().push_description("failed to set camera parameter.");
+	if (!set_camera_param) return set_camera_param.error().push_description("failed to compute disparity: could not set camera parameter");
 
 	return executeNx(command);
 }
@@ -399,10 +399,10 @@ Result<void> Ensenso::computePointCloud() {
 	NxLibCommand command(cmdComputePointMap);
 
 	Result<std::string> serial_number = serialNumber();
-	if (!serial_number) return serial_number.error().push_description("failed to compute point cloud, could not find camera serial number.");
+	if (!serial_number) return serial_number.error().push_description("failed to compute point cloud: could not find camera serial number");
 
 	Result<void> set_camera_param = setNx(command.parameters()[itmCameras], *serial_number);
-	if (!set_camera_param) return set_camera_param.error().push_description("failed to set camera parameter.");
+	if (!set_camera_param) return set_camera_param.error().push_description("failed to compute point cloud: could not set camera parameter");
 
 	return executeNx(command);
 }
@@ -411,17 +411,17 @@ Result<void> Ensenso::registerPointCloud() {
 	NxLibCommand command(cmdRenderPointMap);
 
 	Result<std::string> serial_number = monocularSerialNumber();
-	if (!serial_number) return serial_number.error().push_description("failed to compute point cloud, could not find camera serial number.");
+	if (!serial_number) return serial_number.error().push_description("failed to register point cloud: could not find monocular camera");
 
 	Result<void> set_near_param = setNx(command.parameters()[itmNear], 1); // distance in millimeters to the camera (clip nothing?)
-	if (!set_near_param) return set_near_param.error().push_description("failed to set near parameter.");
+	if (!set_near_param) return set_near_param.error().push_description("failed to register point cloud: could not set near parameter");
 
 	Result<void> set_camera_param = setNx(command.parameters()[itmCamera], *serial_number);
-	if (!set_camera_param) return set_camera_param.error().push_description("failed to set camera parameter.");
+	if (!set_camera_param) return set_camera_param.error().push_description("failed to register point cloud: could not set camera parameter");
 
 	// gives weird (RenderPointMap) results with OpenGL enabled, so disable
 	Result<void> set_use_open_gl_param = setNx(root[itmDefaultParameters][itmRenderPointMap][itmUseOpenGL], false);
-	if (!set_use_open_gl_param) return set_use_open_gl_param.error().push_description("failed to set use open gl parameter.");
+	if (!set_use_open_gl_param) return set_use_open_gl_param.error().push_description("failed to register point cloud: could not set 'use open gl' parameter");
 
 	return executeNx(command);
 }
