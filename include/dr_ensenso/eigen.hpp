@@ -31,12 +31,16 @@ Result<void> setNx(NxLibItem const & item, Eigen::AngleAxisd const & rotation, s
 Result<void> setNx(NxLibItem const & item, Eigen::Isometry3d const & isometry, std::string const & what = "");
 
 template <std::size_t rows, std::size_t cols>
-Eigen::Matrix<double, rows, cols> toEigenMatrix(NxLibItem const & item) {
+Result<Eigen::Matrix<double, rows, cols>> toEigenMatrix(NxLibItem const & item) {
 	Eigen::Matrix<double, rows, cols> result;
 
 	for (std::size_t row = 0; row < rows; ++row) {
 		for (std::size_t col = 0; col < cols; ++col) {
-			result(row, col) = getNx<double>(item[col][row]);
+			Result<double> value = getNx<double>(item[col][row]);
+			if (!value) {
+				return value.error().push_description("failed to retrieve matrix: ");
+			}
+			result(row, col) = *value;
 		}
 	}
 
