@@ -116,7 +116,8 @@ Result<OpenCameraReturn> Ensenso::open(std::string serial, bool connect_monocula
 
 Ensenso::~Ensenso() {
 	if (!init_token_) return;
-	logger_("Closing all camera's.");
+	log("Closing all camera's.");
+	//TODO: Check what happens if close is an error.
 	Result<void> close = executeNx(NxLibCommand(cmdClose));
 	if (!close) {
 		logger_(close.error().format());
