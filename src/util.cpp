@@ -9,15 +9,19 @@ namespace dr {
 
 std::optional<NxLibItem> findCameraBySerial(std::string const & serial) {
 	NxLibItem camera = NxLibItem{}[itmCameras][serial];
-	if (!camera.exists()) {
+	Result<bool> camera_exists = existsNx(camera);
+	if (!camera_exists || !*camera_exists) {
 		return {};
 	}
 	return camera;
 }
 
 std::optional<NxLibItem> findCameraByEepromId(int eeprom_id) {
-	NxLibItem camera = NxLibItem{}[itmCameras][itmByEepromId][eeprom_id];
-	if (!camera.exists()) return {};
+	NxLibItem camera = NxLibItem{}[itmCameras][itmByEepromId][eeprom_id];\
+	Result<bool> camera_exists = existsNx(camera);
+	if (!camera_exists || !*camera_exists) {
+		return {};
+	}
 	return camera;
 }
 
@@ -29,8 +33,8 @@ std::optional<NxLibItem> findCameraByLink(std::string const & linked_to, LogFunc
 		if (!serial) continue;
 
 		NxLibItem camera = cameras[*serial];
-
-		if (!camera[itmLink][itmTarget].exists()) {
+		Result<bool> camera_target_exists = existsNx(camera[itmLink][itmTarget]);
+		if (!camera_target_exists || !*camera_target_exists) {
 			if (logger) logger(fmt::format("Camera with serial {} is not linked to anything."));
 			continue;
 		}
@@ -50,6 +54,7 @@ std::optional<NxLibItem> findCameraByLink(std::string const & linked_to, LogFunc
 
 std::optional<NxLibItem> findCameraByType(std::string const & wanted_type, LogFunction logger) {
 	if (logger) logger(fmt::format("Looking for camera of type {}.", wanted_type));
+
 	NxLibItem cameras = NxLibItem{}[itmCameras];
 	for (int i = 0; i < cameras.count(); ++i) {
 		Result<std::string> serial = getNx<std::string>(cameras[i][itmSerialNumber]);
@@ -76,41 +81,41 @@ Result<NxLibItem> openCamera(NxLibItem camera) {
 	NxLibCommand command(cmdOpen);
 
 	Result<std::string> serial_number = getNx<std::string>((camera)[itmSerialNumber]);
-	if (!serial_number) return serial_number.error().push_description("failed to open camera, serial number not found.");
+	if (!serial_number) return serial_number.error().push_description("failed to open camera, serial number not found: ");
 
 	Result<void> set_camera_param = setNx(command.parameters()[itmCameras], *serial_number);
-	if (!set_camera_param) return set_camera_param.error().push_description("failed to open camera, could not set camera parameter.");
+	if (!set_camera_param) return set_camera_param.error().push_description("failed to open camera, could not set camera parameter: ");
 
 	Result<void> execute_open = executeNx(command);
-	if (!execute_open) return execute_open.error().push_description("failed to open camera, could not execute open command.");
+	if (!execute_open) return execute_open.error().push_description("failed execute open command");
 
 	return camera;
 }
 
 Result<NxLibItem> openCameraBySerial(std::string const & serial) {
 	std::optional<NxLibItem> camera = findCameraBySerial(serial);
-	if (!camera) return estd::error(fmt::format("could not find camera with serial {}.", serial));
+	if (!camera) return estd::error(fmt::format("could not find camera with serial {}", serial));
 
 	return openCamera(camera.value());
 }
 
 Result<NxLibItem> openCameraByEepromId(int eeprom_id) {
 	std::optional<NxLibItem> camera = findCameraByEepromId(eeprom_id);
-	if (!camera) return estd::error(fmt::format("could not find camera with eeprom_id {}.", eeprom_id));
+	if (!camera) return estd::error(fmt::format("could not find camera with eeprom_id {}", eeprom_id));
 
 	return openCamera(camera.value());
 }
 
 Result<NxLibItem> openCameraByLink(std::string const & serial, LogFunction logger) {
 	std::optional<NxLibItem> camera = findCameraByLink(serial, logger);
-	if (!camera) return estd::error(fmt::format("could not find camera by link {}.", serial));
+	if (!camera) return estd::error(fmt::format("could not find camera by link {}", serial));
 
 	return openCamera(camera.value());
 }
 
 Result<NxLibItem> openCameraByType(std::string const & type, LogFunction logger) {
 	std::optional<NxLibItem> camera = findCameraByType(type, logger);
-	if (!camera) return estd::error(fmt::format("could not find camera by type {}.", type));
+	if (!camera) return estd::error(fmt::format("could not find camera by type {}", type));
 
 	return openCamera(camera.value());
 }
@@ -120,14 +125,26 @@ Result<void> executeNx(NxLibCommand const & command, std::string const & what) {
 	command.execute(&error);
 	if (error) {
 		if (error == NxLibExecutionFailed) {
-			Result<NxCommandError> nx_command_error = NxCommandError::getCurrent(what);
-			if (!nx_command_error) return nx_command_error.error().push_description("failed to execute command.");
+			Result<NxCommandError> nx_command_error = NxCommandError::convertCommandResult(command.result());
+			// Could not construct the nxCommandError
+			if (!nx_command_error) {
+				return nx_command_error.error().push_description("failed to construct command error");
+			}
 
 			return Error(nx_command_error->what());
 		}
 		return Error(NxError{itmExecute, error, what}.what());
 	}
 	return estd::in_place_valid;
+}
+
+Result<bool> existsNx(NxLibItem const & item, std::string const & what) {
+	int error = 0;
+	bool result = item.exists(&error);
+	if (error) {
+		return Error(NxError{item, error, what}.what());
+	}
+	return result;
 }
 
 Result<std::int64_t> getNxBinaryTimestamp(NxLibItem const & item, std::string const & what) {
@@ -153,15 +170,16 @@ Result<void> setNxJsonFromFile(NxLibItem const & item, std::string const & filen
 	std::ifstream file;
 	file.open(filename);
 
-	if (!file.good()) return estd::error("failed to set json params from file, the file could not be openend or does not exist.");
+	if (!file.good()) return estd::error("failed to set json params from file, the file could not be openend or does not exist");
 
 	file.exceptions(std::ios::failbit | std::ios::badbit);
 
+	//TODO: put in try catch block
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 
-	Result<void> set_nx_result = setNxJson(item, buffer.str(), what);
-	if (!set_nx_result) return set_nx_result.error().push_description("failed to set json params from file.");
+	Result<void> set_json = setNxJson(item, buffer.str(), what);
+	if (!set_json) return set_json.error().push_description("failed to set json params from file: ");
 
 	return estd::in_place_valid;
 }
@@ -179,13 +197,13 @@ Result<void> writeNxJsonToFile(NxLibItem const & item, std::string const & filen
 	std::ofstream file;
 	file.exceptions(std::ios::failbit | std::ios::badbit);
 	file.open(filename);
-	Result<std::string> get_nx_json_result = getNxJson(item, what);
-	if (!get_nx_json_result) {
-		file.close();
-		return get_nx_json_result.error();
+	Result<std::string> json = getNxJson(item, what);
+	if (!json) {
+		return json.error();
 	}
 
-	file << *get_nx_json_result;
+	//TODO: put in try catch block
+	file << *json;
 	return estd::in_place_valid;
 }
 

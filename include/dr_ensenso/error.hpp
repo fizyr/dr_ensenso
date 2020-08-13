@@ -27,8 +27,8 @@ public:
 	/// Construct a command error from a command name, error symbol, error text and an optional extra message.
 	NxCommandError(std::string const & command, std::string const & error_symbol, std::string const & error_text, std::string const & what = "");
 
-	/// Make a NxCommandError representing the current command error.
-	static Result<NxCommandError> getCurrent(std::string const & what = "");
+	/// Make a NxCommandError representing from the resulting command error.
+	static Result<NxCommandError> convertCommandResult(NxLibItem const & result, std::string const & what = "");
 
 	std::string const & command() const { return command_; }
 	std::string const & error_symbol() const { return error_symbol_; }

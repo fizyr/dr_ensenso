@@ -9,7 +9,7 @@ namespace {
 	}
 
 	std::string makeCommandErrorMsg(std::string const & command, std::string const & symbol, std::string const & text, std::string const & what) {
-		return what + (what.empty() ? "" : ": ") + "Failed to execute NxLibCommand " + command + ": error " + symbol + ": " + text;
+		return what + (what.empty() ? "" : ": ") + "failed to execute NxLibCommand " + command + ": error " + symbol + ": " + text;
 	}
 }
 
@@ -24,17 +24,15 @@ NxCommandError::NxCommandError(std::string const & command, std::string const & 
 	error_text_(error_text),
 	what_(what) {}
 
-Result<NxCommandError> NxCommandError::getCurrent(std::string const & what) {
-	NxLibItem result = NxLibItem{}[itmExecute][itmResult];
-
+Result<NxCommandError> NxCommandError::convertCommandResult(NxLibItem const & result, std::string const & what) {
 	Result<std::string> result_command = getNx<std::string>(result[itmExecute][itmCommand]);
-	if (!result_command) return result_command.error();
+	if (!result_command) return result_command.error().push_description("cant find command item: ");
 
 	Result<std::string> result_error_symbol = getNx<std::string>(result[itmErrorSymbol]);
-	if (!result_error_symbol) return result_error_symbol.error();
+	if (!result_error_symbol) return result_error_symbol.error().push_description("cant find error symbol: ");
 
 	Result<std::string> result_error_text = getNx<std::string>(result[itmErrorText]);
-	if (!result_error_text) return result_error_text.error();
+	if (!result_error_text) return result_error_text.error().push_description("cant find errot text: ");
 
 	return NxCommandError(
 		*result_command,

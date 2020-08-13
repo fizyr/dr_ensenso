@@ -60,6 +60,9 @@ Result<NxLibItem> openCameraByType(std::string const & type, LogFunction logger 
 /// Execute an NxLibCommand.
 Result<void> executeNx(NxLibCommand const & command, std::string const & what = "");
 
+/// Check if an item exists in the NxTree
+Result<bool> existsNx(NxLibItem const & item, std::string const & what = "");
+
 /// Get the value of an NxLibItem as the specified type.
 template<typename T>
 Result<T> getNx(NxLibItem const & item, std::string const & what = "") {
