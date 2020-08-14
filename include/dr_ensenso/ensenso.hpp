@@ -83,11 +83,7 @@ private:
 	{ }
 
 	// Open an ensenso camera.
-	static Result<OpenCameraReturn> open(std::string serial = "",
-			bool connect_monocular = true,
-			LogFunction log = nullptr,
-			NxLibInitToken token = nullptr
-		);
+	static Result<OpenCameraReturn> open(std::string serial = "", bool connect_monocular = true, LogFunction log = nullptr, NxLibInitToken token = nullptr);
 
 public:
 	constexpr static bool needMonocular(ImageType image) {
