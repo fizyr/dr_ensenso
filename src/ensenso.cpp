@@ -607,7 +607,6 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 	Result<void> execute_estimate = executeNx(command_estimate_pose);
 	if (!execute_estimate) return execute_estimate.error();
 
-	// TODO:To this if execute fails as well??
 	// Restore FlexView setting.
 	if (*flex_view > 0) {
 		setFlexView(*flex_view);
@@ -630,8 +629,6 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 }
 
 std::string Ensenso::getWorkspaceCalibrationFrame() {
-	// TODO: implement return getNx<std::string>(stereo_node[itmLink][itmTarget]) . This could break code somewhere else if we returned an error here.
-
 	// Make sure the relevant nxLibItem exists and is non-empty, then return it.
 	NxLibItem item = stereo_node[itmLink][itmTarget];
 	int error;
@@ -845,7 +842,7 @@ Result<Ensenso::CaptureParams> Ensenso::getCaptureParameters(bool crop_to_roi) {
 		params.monocular_width = roi->width;
 		params.monocular_height = roi->height;
 	} else {
-		// TODO: Why not use the function:??? getNx<int>(stereo_node[itmSensor]);
+		// TODO: use getNx to access values
 		auto stereo_sensor_params = stereo_node[itmSensor];
 		auto stereo_size = stereo_sensor_params[itmSize];
 		params.stereo_width  = stereo_size[0].asInt();

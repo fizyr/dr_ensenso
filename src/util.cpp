@@ -165,9 +165,12 @@ Result<void> setNxJsonFromFile(NxLibItem const & item, std::string const & filen
 
 	file.exceptions(std::ios::failbit | std::ios::badbit);
 
-	//TODO: put in try catch block
 	std::stringstream buffer;
-	buffer << file.rdbuf();
+	try {
+		buffer << file.rdbuf();
+	} catch (std::exception &e) {
+		return estd::error(fmt::format("failed to set json: {}", e.what()));
+	}
 
 	Result<void> set_json = setNxJson(item, buffer.str());
 	if (!set_json) return set_json.error().push_description("failed to set json params from file");
@@ -189,8 +192,12 @@ Result<void> writeNxJsonToFile(NxLibItem const & item, std::string const & filen
 	Result<std::string> json = getNxJson(item);
 	if (!json) return json.error();
 
-	//TODO: put in try catch block
-	file << *json;
+	try {
+		file << *json;
+	} catch (std::exception &e) {
+		return estd::error(fmt::format("failed to set json: {}", e.what()));
+	}
+
 	return estd::in_place_valid;
 }
 
