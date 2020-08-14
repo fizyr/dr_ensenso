@@ -20,7 +20,7 @@ enum class ImageType {
 	monocular_overlay,
 };
 
-inline ImageType parseImageType(std::string const & name) {
+inline Result<ImageType> parseImageType(std::string const & name) {
 	if (name == "stereo_raw_left"       ) return ImageType::stereo_raw_left;
 	if (name == "stereo_raw_right"      ) return ImageType::stereo_raw_right;
 	if (name == "stereo_rectified_left" ) return ImageType::stereo_rectified_left;
@@ -28,10 +28,10 @@ inline ImageType parseImageType(std::string const & name) {
 	if (name == "disparity"             ) return ImageType::disparity;
 	if (name == "monocular_raw"         ) return ImageType::monocular_raw;
 	if (name == "monocular_rectified"   ) return ImageType::monocular_rectified;
-	throw std::runtime_error("Unknown image type: " + name);
+	return estd::error("unknown image type: " + name);
 }
 
-inline bool isMonocular(ImageType type) {
+inline Result<bool> isMonocular(ImageType type) {
 	switch (type) {
 		case ImageType::stereo_raw_left:
 		case ImageType::stereo_raw_right:
@@ -44,11 +44,10 @@ inline bool isMonocular(ImageType type) {
 		case ImageType::monocular_overlay:
 			return true;
 	}
-
-	throw std::runtime_error("Unknown image type: " + std::to_string(int(type)));
+	return estd::error("unknown image type: " + std::to_string(int(type)));
 }
 
-inline bool needsRectification(ImageType type) {
+inline Result<bool> needsRectification(ImageType type) {
 	switch (type) {
 		case ImageType::stereo_rectified_left:
 		case ImageType::stereo_rectified_right:
@@ -61,7 +60,7 @@ inline bool needsRectification(ImageType type) {
 		case ImageType::stereo_raw_right:
 			return false;
 	}
-	throw std::runtime_error("Unknown image type: " + std::to_string(int(type)));
+	return estd::error("unknown image type: " + std::to_string(int(type)));
 }
 
 }
