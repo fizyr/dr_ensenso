@@ -1,8 +1,6 @@
 #include "pcl.hpp"
 #include "util.hpp"
 
-#include <stdexcept>
-
 namespace dr {
 
 namespace {
@@ -12,7 +10,6 @@ namespace {
 
 Result<void> pointCloudToBuffer(
 		NxLibItem const & item,
-		std::string const & what,
 		float* buf,
 		std::size_t width,
 		std::size_t height,
@@ -26,36 +23,25 @@ Result<void> pointCloudToBuffer(
 	bool is_float;
 	double timestamp;
 	item.getBinaryDataInfo(&error, &actual_width, &actual_height, &channels, &element_width, &is_float, &timestamp);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 
 	// Make sure data is what we expect.
-	std::string what2 = what.empty() ? std::string() : ": " + what;
-	if (channels != 3) {
-		return estd::error("unexpected number of channels: " + std::to_string(channels) + ", expected 3" + what2);
-	}
-	if (!is_float) {
-		return estd::error("expected floating point data for point cloud conversion" + what2);
-	}
-	if (element_width != 4) {
-		return estd::error("unexpected data width: " + std::to_string(element_width) + ", expected 4" + what2);
-	}
+	if (channels != 3) return estd::error("unexpected number of channels: " + std::to_string(channels) + ", expected 3");
+	if (!is_float) return estd::error("expected floating point data for point cloud conversion");
+	if (element_width != 4) return estd::error("unexpected data width: " + std::to_string(element_width) + ", expected 4");
 	if (!roi) {
 		if (std::size_t(actual_height) != height) {
-			return estd::error("unexpected height: " + std::to_string(actual_height) + ", asked for height: " + std::to_string(height) + what2);
+			return estd::error("unexpected height: " + std::to_string(actual_height) + ", asked for height: " + std::to_string(height));
 		}
 		if (std::size_t(actual_width) != width) {
-			return estd::error("unexpected width: "  + std::to_string(actual_width) + ", asked for width: "  + std::to_string(width) + what2);
+			return estd::error("unexpected width: "  + std::to_string(actual_width) + ", asked for width: "  + std::to_string(width));
 		}
 	}
 
 	// Retrieve data.
 	std::vector<float> point_list;
 	item.getBinaryData(&error, point_list, 0);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 
 	// Copy data in padded buffer (and convert millimeters to meters)
 	if (roi) {
@@ -81,7 +67,7 @@ Result<void> pointCloudToBuffer(
 	return estd::in_place_valid;
 }
 
-Result<pcl::PointCloud<pcl::PointXYZ>> toPointCloud(NxLibItem const & item, std::optional<cv::Rect> roi, std::string const & what) {
+Result<pcl::PointCloud<pcl::PointXYZ>> toPointCloud(NxLibItem const & item, std::optional<cv::Rect> roi) {
 	int error = 0;
 
 	// Retrieve metadata.
@@ -89,28 +75,17 @@ Result<pcl::PointCloud<pcl::PointXYZ>> toPointCloud(NxLibItem const & item, std:
 	bool is_float;
 	double timestamp;
 	item.getBinaryDataInfo(&error, &width, &height, &channels, &element_width, &is_float, &timestamp);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 
 	// Make sure data is what we expect.
-	std::string what2 = what.empty() ? std::string() : ": " + what;
-	if (channels != 3) {
-		return estd::error("unexpected number of channels: " + std::to_string(channels) + ", expected 3" + what2);
-	}
-	if (!is_float) {
-		return estd::error("expected floating point data for point cloud conversion" + what2);
-	}
-	if (element_width != 4) {
-		return estd::error("unexpected data width: " + std::to_string(element_width) + ", expected 4" + what2);
-	}
+	if (channels != 3) return estd::error("unexpected number of channels: " + std::to_string(channels) + ", expected 3");
+	if (!is_float) return estd::error("expected floating point data for point cloud conversion");
+	if (element_width != 4) return estd::error("unexpected data width: " + std::to_string(element_width) + ", expected 4");
 
 	// Retrieve data.
 	std::vector<float> point_list;
 	item.getBinaryData(&error, point_list, 0);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 
 	// Copy point cloud and convert in meters
 	pcl::PointCloud<pcl::PointXYZ> cloud;

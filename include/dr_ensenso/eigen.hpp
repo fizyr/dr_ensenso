@@ -19,16 +19,16 @@ Result<Eigen::AngleAxisd> toEigenRotation(NxLibItem const & item);
 Result<Eigen::Isometry3d> toEigenIsometry(NxLibItem const & item);
 
 /// Set an Eigen::Vector3d in an NxLibItem.
-Result<void> setNx(NxLibItem const & item, Eigen::Vector3d const & vector, std::string const & what = "");
+Result<void> setNx(NxLibItem const & item, Eigen::Vector3d const & vector);
 
 /// Set an Eigen::Vector3d in an NxLibItem.
-Result<void> setNx(NxLibItem const & item, Eigen::Translation3d const & translation, std::string const & what = "");
+Result<void> setNx(NxLibItem const & item, Eigen::Translation3d const & translation);
 
 /// Set an Eigen::Vector3d in an NxLibItem.
-Result<void> setNx(NxLibItem const & item, Eigen::AngleAxisd const & rotation, std::string const & what = "");
+Result<void> setNx(NxLibItem const & item, Eigen::AngleAxisd const & rotation);
 
 /// Set an Eigen::Vector3d in an NxLibItem.
-Result<void> setNx(NxLibItem const & item, Eigen::Isometry3d const & isometry, std::string const & what = "");
+Result<void> setNx(NxLibItem const & item, Eigen::Isometry3d const & isometry);
 
 template <std::size_t rows, std::size_t cols>
 Result<Eigen::Matrix<double, rows, cols>> toEigenMatrix(NxLibItem const & item) {

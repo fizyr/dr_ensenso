@@ -12,7 +12,7 @@
 namespace dr {
 
 /// Convert an NxLibItem to a cv::Mat.
-Result<pcl::PointCloud<pcl::PointXYZ>> toPointCloud(NxLibItem const & item, std::optional<cv::Rect> roi = std::nullopt, std::string const & what = ""); // TODO: Remove (inc. PCL dependency) when not used anymore.
+Result<pcl::PointCloud<pcl::PointXYZ>> toPointCloud(NxLibItem const & item, std::optional<cv::Rect> roi = std::nullopt); // TODO: Remove (inc. PCL dependency) when not used anymore.
 
 /// Load the point cloud from the camera into a buffer.
 /**
@@ -20,7 +20,6 @@ Result<pcl::PointCloud<pcl::PointXYZ>> toPointCloud(NxLibItem const & item, std:
  */
 Result<void> pointCloudToBuffer(
 	NxLibItem const & item,
-	std::string const & what,
 	float* buf,         /// The buffer to load the pointcloud into.
 	std::size_t width,  /// The width of the pointcloud to load.
 	std::size_t height,  /// The height of the pointcloud to load.

@@ -332,7 +332,7 @@ Result<void> Ensenso::trigger(bool stereo, bool monocular) const {
 	}
 
 	Result<void> execute_trigger = executeNx(command);
-	if (!execute_trigger) return execute_trigger.error().push_description("failed to execute trigger command");
+	if (!execute_trigger) return execute_trigger.error();
 
 	if (stereo) {
 		Result<bool> get_triggered = getNx<bool>(command.result()[stereo_serial_number][itmTriggered]);
@@ -378,7 +378,7 @@ Result<void> Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, 
 	}
 
 	Result<void> execute_retrieve = executeNx(command);
-	if (!execute_retrieve) return execute_retrieve.error().push_description("failed to execute retrieve command");
+	if (!execute_retrieve) return execute_retrieve.error();
 
 	if (stereo) {
 		Result<bool> get_retrieved = getNx<bool>(command.result()[stereo_serial_number][itmRetrieved]);
@@ -520,7 +520,7 @@ Result<pcl::PointCloud<pcl::PointXYZ>> Ensenso::loadPointCloud(bool crop_to_roi)
 }
 
 Result<void> Ensenso::loadPointCloudToBuffer(float* buf, std::size_t width, std::size_t height, bool crop_to_roi) {
-	return pointCloudToBuffer(stereo_node[itmImages][itmPointMap], "", buf, width, height, crop_to_roi ? getOptionalRoi() : std::nullopt);
+	return pointCloudToBuffer(stereo_node[itmImages][itmPointMap], buf, width, height, crop_to_roi ? getOptionalRoi() : std::nullopt);
 }
 
 Result<pcl::PointCloud<pcl::PointXYZ>> Ensenso::loadRegisteredPointCloud(bool crop_to_roi) {
@@ -528,7 +528,7 @@ Result<pcl::PointCloud<pcl::PointXYZ>> Ensenso::loadRegisteredPointCloud(bool cr
 }
 
 Result<void> Ensenso::loadRegisteredPointCloudToBuffer(float* buf, std::size_t width, std::size_t height, bool crop_to_roi) {
-	return pointCloudToBuffer(root[itmImages][itmRenderPointMap], "", buf, width, height, crop_to_roi ? getOptionalRoi() : std::nullopt);
+	return pointCloudToBuffer(root[itmImages][itmRenderPointMap], buf, width, height, crop_to_roi ? getOptionalRoi() : std::nullopt);
 }
 
 Result<void> Ensenso::discardCalibrationPatterns() {
@@ -570,7 +570,7 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 		// TODO:Why do this???
 		// Optionally copy the result for debugging.
 		if (result_dump_info) *result_dump_info = command_collect_pattern.result().asJson(true);
-		return execute_collect_pattern.error().push_description("failed to execute collect pattern command");
+		return execute_collect_pattern.error();
 	}
 
 	// restore FlexView setting
@@ -587,13 +587,13 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, bool ignore_calibration)  {
 	Result<void> discard_calibration_patterns = discardCalibrationPatterns();
 	if (!discard_calibration_patterns) {
-		return discard_calibration_patterns.error().push_description("failed to detect calibration pattern: ");
+		return discard_calibration_patterns.error().push_description("failed to detect calibration pattern");
 	}
 
 	for (int i = 0; i < samples; ++i) {
 		Result<void> record_calibration_pattern = recordCalibrationPattern();
 		if (!record_calibration_pattern) {
-			return record_calibration_pattern.error().push_description("failed to detect calibration pattern: ");
+			return record_calibration_pattern.error().push_description("failed to detect calibration pattern");
 		}
 	}
 
@@ -605,7 +605,7 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 	// Get the pose of the pattern.
 	NxLibCommand command_estimate_pose(cmdEstimatePatternPose);
 	Result<void> execute_estimate = executeNx(command_estimate_pose);
-	if (!execute_estimate) return execute_estimate.error().push_description("failed to execute estimate pose command");
+	if (!execute_estimate) return execute_estimate.error();
 
 	// TODO:To this if execute fails as well??
 	// Restore FlexView setting.
@@ -614,7 +614,7 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 	}
 
 	Result<Eigen::Isometry3d> eigen_isometry = toEigenIsometry(command_estimate_pose.result()["Patterns"][0][itmPatternPose]);
-	if (!eigen_isometry) return eigen_isometry.error().push_description("failed to detect calibration pattern: ");
+	if (!eigen_isometry) return eigen_isometry.error().push_description("failed to detect calibration pattern");
 
 	eigen_isometry->translation() *= 0.001;
 
@@ -645,7 +645,7 @@ Result<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
 
 	// convert from mm to m
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(stereo_node[itmLink]);
-	if (!pose) return pose.error().push_description("failed to retrieve workspace calibration: ");
+	if (!pose) return pose.error().push_description("failed to retrieve workspace calibration");
 	pose->translation() *= 0.001;
 
 	return pose;
@@ -702,16 +702,16 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	Result<void> execute_calibrate = executeNx(calibrate);
 	if (!execute_calibrate) {
 		if (result_dump_info) *result_dump_info = calibrate.result().asJson(true);
-		return execute_calibrate.error().push_description("failed to execute calibrate command");
+		return execute_calibrate.error();
 	}
 
 	// return result (camera pose, pattern pose, iterations, reprojection error)
 	Result<Eigen::Isometry3d> camera_pose  = toEigenIsometry(stereo_node[itmLink]);
-	if (!camera_pose) camera_pose.error().push_description("failed to compute calibration: ");
+	if (!camera_pose) camera_pose.error().push_description("failed to compute calibration");
 	camera_pose->inverse(); // "Link" is inverted
 
 	Result<Eigen::Isometry3d> pattern_pose = toEigenIsometry(calibrate.result()[itmPatternPose]);
-	if (!pattern_pose) pattern_pose.error().push_description("failed to compute calibration: ");
+	if (!pattern_pose) pattern_pose.error().push_description("failed to compute calibration");
 
 	camera_pose->translation()  *= 0.001;
 	pattern_pose->translation() *= 0.001;
@@ -761,7 +761,7 @@ Result<void> Ensenso::setWorkspaceCalibration(Eigen::Isometry3d const & workspac
 	if (!set_defined_pose_param) return set_defined_pose_param.error().push_description("failed to set workspace calibration");
 
 	Result<void> execute_calibrate_workspace = executeNx(command);
-	if (!execute_calibrate_workspace) return execute_calibrate_workspace.error().push_description("failed to execute calibrate workspace command");
+	if (!execute_calibrate_workspace) return execute_calibrate_workspace.error();
 
 	if (store) {
 		Result<void> store_workspace_calibration = storeWorkspaceCalibration();
@@ -788,7 +788,7 @@ Result<void> Ensenso::clearWorkspaceCalibration(bool store) {
 	if (!set_target_param) return set_target_param.error().push_description("failed to clear workspace calibration");
 
 	Result<void> execute_calibrate_workspace = executeNx(command);
-	if (!execute_calibrate_workspace) return execute_calibrate_workspace.error().push_description("failed to execute calibrate workspace command");
+	if (!execute_calibrate_workspace) return execute_calibrate_workspace.error();
 
 	// clear target name
 	// TODO: Can be removed after settings the target parameter above?
@@ -798,7 +798,7 @@ Result<void> Ensenso::clearWorkspaceCalibration(bool store) {
 
 	if (store) {
 		Result<void> store_workspace_calibration = storeWorkspaceCalibration();
-		if (!store_workspace_calibration) return store_workspace_calibration.error().push_description("failed to clear workspace calibration: ");
+		if (!store_workspace_calibration) return store_workspace_calibration.error().push_description("failed to clear workspace calibration");
 	}
 
 	return estd::in_place_valid;
@@ -823,7 +823,7 @@ Result<void> Ensenso::storeWorkspaceCalibration() {
 Result<Eigen::Isometry3d> Ensenso::getMonocularLink() const {
 	// convert from mm to m
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(monocular_node.value()[itmLink]);
-	if (!pose) return pose.error().push_description("failed to get monocular link pose: ");
+	if (!pose) return pose.error().push_description("failed to get monocular link pose");
 
 	pose->translation() *= 0.001;
 

@@ -18,13 +18,13 @@ Result<Eigen::Vector3d> toEigenVector(NxLibItem const & item) {
 
 Result<Eigen::Translation3d> toEigenTranslation(NxLibItem const & item) {
 	Result<Eigen::Vector3d> translation = toEigenVector(item);
-	if (!translation) return translation.error().push_description("failed to retrieve translation: ");
+	if (!translation) return translation.error().push_description("failed to retrieve translation");
 	return Eigen::Translation3d{*translation};
 }
 
 Result<Eigen::AngleAxisd> toEigenRotation(NxLibItem const & item) {
 	Result<Eigen::Vector3d> axis = toEigenVector(item[itmAxis]);
-	if (!axis) return axis.error().push_description("failed to retrieve rotation: ");
+	if (!axis) return axis.error().push_description("failed to retrieve rotation");
 
 	Result<double> angle = getNx<double>(item[itmAngle]);
 	if (!angle) return angle.error().push_description("failed to retrieve rotation");
@@ -34,47 +34,47 @@ Result<Eigen::AngleAxisd> toEigenRotation(NxLibItem const & item) {
 
 Result<Eigen::Isometry3d> toEigenIsometry(NxLibItem const & item) {
 	Result<Eigen::Translation3d> eigen_translation = toEigenTranslation(item[itmTranslation]);
-	if (!eigen_translation) return eigen_translation.error().push_description("failed to retrieve isometry: ");
+	if (!eigen_translation) return eigen_translation.error().push_description("failed to retrieve isometry");
 
 	Result<Eigen::AngleAxisd> eigen_rotation = toEigenRotation(item[itmRotation]);
-	if (!eigen_rotation) return eigen_rotation.error().push_description("failed to retrieve isometry: ");
+	if (!eigen_rotation) return eigen_rotation.error().push_description("failed to retrieve isometry");
 
 
 	return *eigen_translation * *eigen_rotation;
 }
 
-Result<void> setNx(NxLibItem const & item, Eigen::Vector3d const & vector, std::string const & what) {
-	Result<void> set_item_0 = setNx(item[0], vector.x(), what);
+Result<void> setNx(NxLibItem const & item, Eigen::Vector3d const & vector) {
+	Result<void> set_item_0 = setNx(item[0], vector.x());
 	if (!set_item_0) return set_item_0.error();
 
-	Result<void> set_item_1 = setNx(item[1], vector.y(), what);
+	Result<void> set_item_1 = setNx(item[1], vector.y());
 	if (!set_item_1) return set_item_1.error();
 
-	Result<void> set_item_2 = setNx(item[2], vector.z(), what);
+	Result<void> set_item_2 = setNx(item[2], vector.z());
 	if (!set_item_2) return set_item_2.error();
 
 	return estd::in_place_valid;
 }
 
-Result<void> setNx(NxLibItem const & item, Eigen::Translation3d const & translation, std::string const & what) {
-	return setNx(item, translation.vector(), what);
+Result<void> setNx(NxLibItem const & item, Eigen::Translation3d const & translation) {
+	return setNx(item, translation.vector());
 }
 
-Result<void> setNx(NxLibItem const & item, Eigen::AngleAxisd const & rotation, std::string const & what) {
-	Result<void> set_nx_angle = setNx(item[itmAngle], rotation.angle(), what);
+Result<void> setNx(NxLibItem const & item, Eigen::AngleAxisd const & rotation) {
+	Result<void> set_nx_angle = setNx(item[itmAngle], rotation.angle());
 	if (!set_nx_angle) return set_nx_angle.error().push_description("failed to set rotation");
 
-	Result<void> set_nx_axis = setNx(item[itmAxis], rotation.axis(), what);
+	Result<void> set_nx_axis = setNx(item[itmAxis], rotation.axis());
 	if (!set_nx_axis) return set_nx_axis.error().push_description("failed to set rotation");
 
 	return estd::in_place_valid;
 }
 
-Result<void> setNx(NxLibItem const & item, Eigen::Isometry3d const & isometry, std::string const & what) {
-	Result<void> set_nx_translation = setNx(item[itmTranslation], Eigen::Vector3d{isometry.translation()}, what);
+Result<void> setNx(NxLibItem const & item, Eigen::Isometry3d const & isometry) {
+	Result<void> set_nx_translation = setNx(item[itmTranslation], Eigen::Vector3d{isometry.translation()});
 	if (!set_nx_translation) return set_nx_translation.error().push_description("failed to set isometry");
 
-	Result<void> set_nx_rotation = setNx(item[itmRotation], Eigen::AngleAxisd{isometry.rotation()}, what);
+	Result<void> set_nx_rotation = setNx(item[itmRotation], Eigen::AngleAxisd{isometry.rotation()});
 	if (!set_nx_rotation) return set_nx_rotation.error().push_description("failed to set isometry");
 
 	return estd::in_place_valid;

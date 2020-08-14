@@ -5,13 +5,11 @@
 
 namespace dr {
 
-Result<cv::Mat> toCvMat(NxLibItem const & item, std::optional<cv::Rect> roi, std::string const & what) {
+Result<cv::Mat> toCvMat(NxLibItem const & item, std::optional<cv::Rect> roi) {
 	int error = 0;
 	cv::Mat result;
 	item.getBinaryData(&error, result, nullptr);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 
 	// convert RGB output from camera to OpenCV standard (BGR)
 	if (result.channels() == 3) {
@@ -33,8 +31,7 @@ Result<void> toCvMat(
 	std::size_t width,
 	std::size_t height,
 	int cv_type,
-	std::optional<cv::Rect> roi,
-	std::string const & what
+	std::optional<cv::Rect> roi
 ) {
 	int error = 0;
 
@@ -54,16 +51,13 @@ Result<void> toCvMat(
 		bool is_float;
 		double timestamp;
 		item.getBinaryDataInfo(&error, &initial_width, &initial_height, &channels, &element_width, &is_float, &timestamp);
-		if (error) {
-			return Error(NxError{item, error, what}.what());
-		}
+		if (error) return estd::error(composeTreeErrorMessage(error, true));
 
 		if (((roi->width) != initial_width || (roi->height) != initial_height)) {
 			cv::Mat original(initial_height, initial_width, cv_type);
 			item.getBinaryData(&error, original, nullptr);
-			if (error) {
-				return Error(NxError{item, error, what}.what());
-			}
+			if (error) return estd::error(composeTreeErrorMessage(error, true));
+
 			original(*roi).copyTo(wrapped);
 			if (wrapped.channels() == 3) cv::cvtColor(wrapped, wrapped, cv::COLOR_RGB2BGR);
 			return estd::in_place_valid;
@@ -71,64 +65,54 @@ Result<void> toCvMat(
 	}
 
 	item.getBinaryData(&error, wrapped, nullptr);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 
 	// convert RGB output from camera to OpenCV standard (BGR)
 	if (wrapped.channels() == 3) cv::cvtColor(wrapped, wrapped, cv::COLOR_RGB2BGR);
 	return estd::in_place_valid;
 }
 
-Result<cv::Mat> toCameraMatrix(NxLibItem const & item, std::string const & camera, std::string const & what) {
+Result<cv::Mat> toCameraMatrix(NxLibItem const & item, std::string const & camera) {
 	int error = 0;
 	cv::Mat result = cv::Mat::zeros(3, 3, CV_64F);
 	for (std::size_t i = 0; i < 3; i++) {
 		for (std::size_t j = 0; j < 3; j++) {
 			result.at<double>(i,j) = item[itmMonocular][camera == "Left" ? itmLeft : itmRight][itmCamera][j][i].asDouble(&error);
-			if (error) {
-				return Error(NxError{item, error, what}.what());
-			}
+			if (error) return estd::error(composeTreeErrorMessage(error, true));
 		}
 	}
 	return result;
 }
 
-Result<cv::Mat> toDistortionParameters(NxLibItem const & item, std::string const & camera, std::string const & what) {
+Result<cv::Mat> toDistortionParameters(NxLibItem const & item, std::string const & camera) {
 	int error = 0;
 	cv::Mat result = cv::Mat::zeros(8, 1, CV_64F);
 	for (std::size_t i = 0; i < 5; i++) {
 		result.at<double>(i) = item[itmMonocular][camera == "Left" ? itmLeft : itmRight][itmDistortion][i].asDouble(&error);
-		if (error) {
-			return Error(NxError{item, error, what}.what());
-		}
+		if (error) return estd::error(composeTreeErrorMessage(error, true));
 	}
 	return result;
 }
 
-Result<cv::Mat> toRectificationMatrix(NxLibItem const & item, std::string const & camera, std::string const & what) {
+Result<cv::Mat> toRectificationMatrix(NxLibItem const & item, std::string const & camera) {
 	int error = 0;
 	cv::Mat result = cv::Mat::zeros(3, 3, CV_64F);
 	for (std::size_t i = 0; i < 3; i++) {
 		for (std::size_t j = 0; j < 3; j++) {
 			result.at<double>(i,j) = item[itmStereo][camera == "Left" ? itmLeft : itmRight][itmRotation][j][i].asDouble(&error);
-			if (error) {
-				return Error(NxError{item, error, what}.what());
-			}
+			if (error) return estd::error(composeTreeErrorMessage(error, true));
 		}
 	}
 	return result;
 }
 
-Result<cv::Mat> toProjectionMatrix(NxLibItem const & item, std::string const & camera, std::string const & what) {
+Result<cv::Mat> toProjectionMatrix(NxLibItem const & item, std::string const & camera) {
 	int error = 0;
 	cv::Mat result = cv::Mat::zeros(3, 4, CV_64F);
 	for (std::size_t i = 0; i < 3; i++) {
 		for (std::size_t j = 0; j < 3; j++) {
 			result.at<double>(i,j) = item[itmStereo][camera == "Left" ? itmLeft : itmRight][itmCamera][j][i].asDouble(&error);
-			if (error) {
-				return Error(NxError{item, error, what}.what());
-			}
+			if (error) return estd::error(composeTreeErrorMessage(error, true));
 		}
 	}
 
@@ -140,12 +124,10 @@ Result<cv::Mat> toProjectionMatrix(NxLibItem const & item, std::string const & c
 	return result;
 }
 
-Result<void> toNxLibItem(NxLibItem const & item, cv::Mat const & value, std::string const & what) {
+Result<void> toNxLibItem(NxLibItem const & item, cv::Mat const & value) {
 	int error = 0;
 	item.setBinaryData(&error, value);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, false));
 	return estd::in_place_valid;
 }
 

@@ -57,7 +57,6 @@ include_directories(include/${PROJECT_NAME})
 add_library(${PROJECT_NAME}
 	src/eigen.cpp
 	src/ensenso.cpp
-	src/error.cpp
 	src/opencv.cpp
 	src/pcl.cpp
 	src/util.cpp

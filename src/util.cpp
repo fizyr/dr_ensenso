@@ -81,13 +81,13 @@ Result<NxLibItem> openCamera(NxLibItem camera) {
 	NxLibCommand command(cmdOpen);
 
 	Result<std::string> serial_number = getNx<std::string>((camera)[itmSerialNumber]);
-	if (!serial_number) return serial_number.error().push_description("failed to open camera, serial number not found: ");
+	if (!serial_number) return serial_number.error().push_description("failed to open camera, serial number not found");
 
 	Result<void> set_camera_param = setNx(command.parameters()[itmCameras], *serial_number);
-	if (!set_camera_param) return set_camera_param.error().push_description("failed to open camera, could not set camera parameter: ");
+	if (!set_camera_param) return set_camera_param.error().push_description("failed to open camera, could not set camera parameter");
 
 	Result<void> execute_open = executeNx(command);
-	if (!execute_open) return execute_open.error().push_description("failed execute open command");
+	if (!execute_open) return execute_open.error();
 
 	return camera;
 }
@@ -120,57 +120,48 @@ Result<NxLibItem> openCameraByType(std::string const & type, LogFunction logger)
 	return openCamera(camera.value());
 }
 
-Result<void> executeNx(NxLibCommand const & command, std::string const & what) {
+Result<void> executeNx(NxLibCommand const & command) {
 	int error = 0;
 	command.execute(&error);
 	if (error) {
 		if (error == NxLibExecutionFailed) {
-			Result<NxCommandError> nx_command_error = NxCommandError::convertCommandResult(command.result());
+			Result<std::string> command_error = composeCommandErrorMessage(command.result());
 			// Could not construct the nxCommandError
-			if (!nx_command_error) {
-				return nx_command_error.error().push_description("failed to construct command error");
-			}
-
-			return Error(nx_command_error->what());
+			if (!command_error) return command_error.error().push_description("failed to construct command error");
+			return estd::error(*command_error);
 		}
-		return Error(NxError{itmExecute, error, what}.what());
+		return estd::error("unknown execute command error");
 	}
 	return estd::in_place_valid;
 }
 
-Result<bool> existsNx(NxLibItem const & item, std::string const & what) {
+Result<bool> existsNx(NxLibItem const & item) {
 	int error = 0;
 	bool result = item.exists(&error);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 	return result;
 }
 
-Result<std::int64_t> getNxBinaryTimestamp(NxLibItem const & item, std::string const & what) {
+Result<std::int64_t> getNxBinaryTimestamp(NxLibItem const & item) {
 	int error = 0;
 	double timestamp = 0;
 	item.getBinaryDataInfo(&error, nullptr, nullptr, nullptr, nullptr, nullptr, &timestamp);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 	return (timestamp - 11644473600.0) * 1e6; // Correct for epoch and turn into microseconds.
 }
 
-Result<void> setNxJson(NxLibItem const & item, std::string const & json, std::string const & what) {
+Result<void> setNxJson(NxLibItem const & item, std::string const & json) {
 	int error = 0;
 	item.setJson(&error, json, true);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, false));
 	return estd::in_place_valid;
 }
 
-Result<void> setNxJsonFromFile(NxLibItem const & item, std::string const & filename, std::string const & what) {
+Result<void> setNxJsonFromFile(NxLibItem const & item, std::string const & filename) {
 	std::ifstream file;
 	file.open(filename);
 
-	if (!file.good()) return estd::error("failed to set json params from file, the file could not be openend or does not exist");
+	if (!file.good()) return estd::error("failed to set json params from file: the file could not be openend or does not exist");
 
 	file.exceptions(std::ios::failbit | std::ios::badbit);
 
@@ -178,33 +169,48 @@ Result<void> setNxJsonFromFile(NxLibItem const & item, std::string const & filen
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 
-	Result<void> set_json = setNxJson(item, buffer.str(), what);
-	if (!set_json) return set_json.error().push_description("failed to set json params from file: ");
+	Result<void> set_json = setNxJson(item, buffer.str());
+	if (!set_json) return set_json.error().push_description("failed to set json params from file");
 
 	return estd::in_place_valid;
 }
 
-Result<std::string> getNxJson(NxLibItem const & item, std::string const & what) {
+Result<std::string> getNxJson(NxLibItem const & item) {
 	int error = 0;
 	std::string result = item.asJson(&error, true);
-	if (error) {
-		return Error(NxError{item, error, what}.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 	return result;
 }
 
-Result<void> writeNxJsonToFile(NxLibItem const & item, std::string const & filename, std::string const & what) {
+Result<void> writeNxJsonToFile(NxLibItem const & item, std::string const & filename) {
 	std::ofstream file;
 	file.exceptions(std::ios::failbit | std::ios::badbit);
 	file.open(filename);
-	Result<std::string> json = getNxJson(item, what);
-	if (!json) {
-		return json.error();
-	}
+	Result<std::string> json = getNxJson(item);
+	if (!json) return json.error();
 
 	//TODO: put in try catch block
 	file << *json;
 	return estd::in_place_valid;
+}
+
+std::string composeTreeErrorMessage(int error, bool read) {
+	std::string operation = read ? "read from" : "write to";
+	return "failed to " + operation + " NxLibTree : " + nxLibTranslateReturnCode(error);
+}
+
+Result<std::string> composeCommandErrorMessage(NxLibItem const & result) {
+	Result<std::string> command = getNx<std::string>(result[itmExecute][itmCommand]);
+	if (!command) return command.error().push_description("cant find command item");
+
+	Result<std::string> error_symbol = getNx<std::string>(result[itmErrorSymbol]);
+	if (!error_symbol) return error_symbol.error().push_description("cant find error symbol");
+
+	Result<std::string> error_text = getNx<std::string>(result[itmErrorText]);
+	if (!error_text) return error_text.error().push_description("cant find errot text");
+
+
+	return "failed to execute NxLibCommand " + *command + ": error " + *error_symbol + ": " + *error_text;
 }
 
 }

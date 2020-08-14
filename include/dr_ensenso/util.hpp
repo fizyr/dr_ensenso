@@ -1,5 +1,4 @@
 #pragma once
-#include "error.hpp"
 #include "types.hpp"
 
 #include <ensenso/nxLib.h>
@@ -7,7 +6,6 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
-#include <stdexcept>
 #include <string>
 
 
@@ -58,48 +56,46 @@ Result<NxLibItem> openCameraByLink(std::string const & serial, LogFunction logge
 Result<NxLibItem> openCameraByType(std::string const & type, LogFunction logger = nullptr);
 
 /// Execute an NxLibCommand.
-Result<void> executeNx(NxLibCommand const & command, std::string const & what = "");
+Result<void> executeNx(NxLibCommand const & command);
 
 /// Check if an item exists in the NxTree
-Result<bool> existsNx(NxLibItem const & item, std::string const & what = "");
+Result<bool> existsNx(NxLibItem const & item);
+
+std::string composeTreeErrorMessage(int error, bool read);
+
+Result<std::string> composeCommandErrorMessage(NxLibItem const & result);
 
 /// Get the value of an NxLibItem as the specified type.
 template<typename T>
-Result<T> getNx(NxLibItem const & item, std::string const & what = "") {
+Result<T> getNx(NxLibItem const & item) {
 	int error = 0;
 	T result = item.as<T>(&error);
-	if (error) {
-		NxError nx_error{item, error, what};
-		return Error(nx_error.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, true));
 	return result;
 }
 
 /// Set the value of an NxLibItem.
 template<typename T>
-Result<void> setNx(NxLibItem const & item, T const & value, std::string const & what = "") {
+Result<void> setNx(NxLibItem const & item, T const & value) {
 	int error = 0;
 	item.set(&error, value);
-	if (error) {
-		NxError nx_error{item, error, what};
-		return Error(nx_error.what());
-	}
+	if (error) return estd::error(composeTreeErrorMessage(error, false));
 	return estd::in_place_valid;
 }
 
 /// Get the timestamp of a binary node as microseconds since January 1 1970 UTC.
-Result<std::int64_t> getNxBinaryTimestamp(NxLibItem const & item, std::string const & what = "");
+Result<std::int64_t> getNxBinaryTimestamp(NxLibItem const & item);
 
 /// Set the value of an NxLibItem to a JSON tree.
-Result<void> setNxJson(NxLibItem const & item, std::string const & json, std::string const & what = "");
+Result<void> setNxJson(NxLibItem const & item, std::string const & json);
 
 /// Set the value of an NxLibItem to a JSON tree from a file.
-Result<void> setNxJsonFromFile(NxLibItem const & item, std::string const & filename, std::string const & what = "");
+Result<void> setNxJsonFromFile(NxLibItem const & item, std::string const & filename);
 
 /// Get the value of an NxLibItem as a JSON tree.
-Result<std::string> getNxJson(NxLibItem const & item, std::string const & what = "");
+Result<std::string> getNxJson(NxLibItem const & item);
 
 /// Get the value of an NxLibItem as JSON tree and write it to a file.
-Result<void> writeNxJsonToFile(NxLibItem const & item, std::string const & filename, std::string const & what = "");
+Result<void> writeNxJsonToFile(NxLibItem const & item, std::string const & filename);
 
 }
