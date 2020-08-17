@@ -61,7 +61,8 @@ Result<void> executeNx(NxLibCommand const & command);
 /// Check if an item exists in the NxTree
 Result<bool> existsNx(NxLibItem const & item);
 
-std::string composeTreeErrorMessage(int error, bool read);
+std::string composeTreeReadErrorMessage(int error, NxLibItem const & item);
+std::string composeTreeWriteErrorMessage(int error, NxLibItem const & item);
 
 Result<std::string> composeCommandErrorMessage(NxLibItem const & result);
 
@@ -70,7 +71,7 @@ template<typename T>
 Result<T> getNx(NxLibItem const & item) {
 	int error = 0;
 	T result = item.as<T>(&error);
-	if (error) return estd::error(composeTreeErrorMessage(error, true));
+	if (error) return estd::error(composeTreeReadErrorMessage(error, item));
 	return result;
 }
 
@@ -79,7 +80,7 @@ template<typename T>
 Result<void> setNx(NxLibItem const & item, T const & value) {
 	int error = 0;
 	item.set(&error, value);
-	if (error) return estd::error(composeTreeErrorMessage(error, false));
+	if (error) return estd::error(composeTreeWriteErrorMessage(error, item));
 	return estd::in_place_valid;
 }
 

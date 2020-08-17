@@ -23,7 +23,7 @@ Result<void> pointCloudToBuffer(
 	bool is_float;
 	double timestamp;
 	item.getBinaryDataInfo(&error, &actual_width, &actual_height, &channels, &element_width, &is_float, &timestamp);
-	if (error) return estd::error(composeTreeErrorMessage(error, true));
+	if (error) return estd::error(composeTreeReadErrorMessage(error, item));
 
 	// Make sure data is what we expect.
 	if (channels != 3) return estd::error("unexpected number of channels: " + std::to_string(channels) + ", expected 3");
@@ -41,7 +41,7 @@ Result<void> pointCloudToBuffer(
 	// Retrieve data.
 	std::vector<float> point_list;
 	item.getBinaryData(&error, point_list, 0);
-	if (error) return estd::error(composeTreeErrorMessage(error, true));
+	if (error) return estd::error(composeTreeReadErrorMessage(error, item));
 
 	// Copy data in padded buffer (and convert millimeters to meters)
 	if (roi) {
@@ -75,7 +75,7 @@ Result<pcl::PointCloud<pcl::PointXYZ>> toPointCloud(NxLibItem const & item, std:
 	bool is_float;
 	double timestamp;
 	item.getBinaryDataInfo(&error, &width, &height, &channels, &element_width, &is_float, &timestamp);
-	if (error) return estd::error(composeTreeErrorMessage(error, true));
+	if (error) return estd::error(composeTreeReadErrorMessage(error, item));
 
 	// Make sure data is what we expect.
 	if (channels != 3) return estd::error("unexpected number of channels: " + std::to_string(channels) + ", expected 3");
@@ -85,7 +85,7 @@ Result<pcl::PointCloud<pcl::PointXYZ>> toPointCloud(NxLibItem const & item, std:
 	// Retrieve data.
 	std::vector<float> point_list;
 	item.getBinaryData(&error, point_list, 0);
-	if (error) return estd::error(composeTreeErrorMessage(error, true));
+	if (error) return estd::error(composeTreeReadErrorMessage(error, item));
 
 	// Copy point cloud and convert in meters
 	pcl::PointCloud<pcl::PointXYZ> cloud;

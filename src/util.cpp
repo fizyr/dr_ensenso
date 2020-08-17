@@ -17,7 +17,7 @@ std::optional<NxLibItem> findCameraBySerial(std::string const & serial) {
 }
 
 std::optional<NxLibItem> findCameraByEepromId(int eeprom_id) {
-	NxLibItem camera = NxLibItem{}[itmCameras][itmByEepromId][eeprom_id];\
+	NxLibItem camera = NxLibItem{}[itmCameras][itmByEepromId][eeprom_id];
 	Result<bool> camera_exists = existsNx(camera);
 	if (!camera_exists || !*camera_exists) {
 		return {};
@@ -127,10 +127,13 @@ Result<void> executeNx(NxLibCommand const & command) {
 		if (error == NxLibExecutionFailed) {
 			Result<std::string> command_error = composeCommandErrorMessage(command.result());
 			// Could not construct the nxCommandError
-			if (!command_error) return command_error.error().push_description("failed to construct command error");
+			if (!command_error) {
+				return command_error.error().push_description("failed to execute NxLibCommand " +
+					command.commandName + " and failed to retrieve additional error details");
+			}
 			return estd::error(*command_error);
 		}
-		return estd::error("unknown execute command error");
+		return estd::error("failed to execute NxLibCommand " + command.commandName + ": " + nxLibTranslateReturnCode(error));
 	}
 	return estd::in_place_valid;
 }
@@ -138,7 +141,7 @@ Result<void> executeNx(NxLibCommand const & command) {
 Result<bool> existsNx(NxLibItem const & item) {
 	int error = 0;
 	bool result = item.exists(&error);
-	if (error) return estd::error(composeTreeErrorMessage(error, true));
+	if (error) return estd::error(composeTreeReadErrorMessage(error, item));
 	return result;
 }
 
@@ -146,14 +149,14 @@ Result<std::int64_t> getNxBinaryTimestamp(NxLibItem const & item) {
 	int error = 0;
 	double timestamp = 0;
 	item.getBinaryDataInfo(&error, nullptr, nullptr, nullptr, nullptr, nullptr, &timestamp);
-	if (error) return estd::error(composeTreeErrorMessage(error, true));
+	if (error) return estd::error(composeTreeReadErrorMessage(error, item));
 	return (timestamp - 11644473600.0) * 1e6; // Correct for epoch and turn into microseconds.
 }
 
 Result<void> setNxJson(NxLibItem const & item, std::string const & json) {
 	int error = 0;
 	item.setJson(&error, json, true);
-	if (error) return estd::error(composeTreeErrorMessage(error, false));
+	if (error) return estd::error(composeTreeWriteErrorMessage(error, item));
 	return estd::in_place_valid;
 }
 
@@ -181,7 +184,7 @@ Result<void> setNxJsonFromFile(NxLibItem const & item, std::string const & filen
 Result<std::string> getNxJson(NxLibItem const & item) {
 	int error = 0;
 	std::string result = item.asJson(&error, true);
-	if (error) return estd::error(composeTreeErrorMessage(error, true));
+	if (error) return estd::error(composeTreeReadErrorMessage(error, item));
 	return result;
 }
 
@@ -201,20 +204,23 @@ Result<void> writeNxJsonToFile(NxLibItem const & item, std::string const & filen
 	return estd::in_place_valid;
 }
 
-std::string composeTreeErrorMessage(int error, bool read) {
-	std::string operation = read ? "read from" : "write to";
-	return "failed to " + operation + " NxLibTree : " + nxLibTranslateReturnCode(error);
+std::string composeTreeReadErrorMessage(int error, NxLibItem & item) {
+	return "failed to read from NxLibTree at path: " + item.path + " : " + nxLibTranslateReturnCode(error);
+}
+
+std::string composeTreeWriteErrorMessage(int error, NxLibItem & item) {
+	return "failed to write to NxLibTree at path: " + item.path + " : " + nxLibTranslateReturnCode(error);
 }
 
 Result<std::string> composeCommandErrorMessage(NxLibItem const & result) {
 	Result<std::string> command = getNx<std::string>(result[itmExecute][itmCommand]);
-	if (!command) return command.error().push_description("cant find command item");
+	if (!command) return command.error().push_description("failed to determine command name");
 
 	Result<std::string> error_symbol = getNx<std::string>(result[itmErrorSymbol]);
-	if (!error_symbol) return error_symbol.error().push_description("cant find error symbol");
+	if (!error_symbol) return error_symbol.error().push_description("failed to determine error symbol");
 
 	Result<std::string> error_text = getNx<std::string>(result[itmErrorText]);
-	if (!error_text) return error_text.error().push_description("cant find errot text");
+	if (!error_text) return error_text.error().push_description("failed to retrieve error text");
 
 
 	return "failed to execute NxLibCommand " + *command + ": error " + *error_symbol + ": " + *error_text;
