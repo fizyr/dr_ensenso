@@ -19,6 +19,7 @@ Result<Eigen::Vector3d> toEigenVector(NxLibItem const & item) {
 Result<Eigen::Translation3d> toEigenTranslation(NxLibItem const & item) {
 	Result<Eigen::Vector3d> translation = toEigenVector(item);
 	if (!translation) return translation.error().push_description("failed to retrieve translation");
+
 	return Eigen::Translation3d{*translation};
 }
 
