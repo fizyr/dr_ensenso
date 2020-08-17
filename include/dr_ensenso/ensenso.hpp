@@ -74,13 +74,12 @@ protected:
 
 private:
 	/// Construct a ensenso object.
-	Ensenso(NxLibItem & camera_node, std::optional<NxLibItem> monocular_node, NxLibInitToken token, LogFunction logger)
-		:
-			stereo_node{std::move(camera_node)},
-			monocular_node{std::move(monocular_node)},
-			init_token_{std::move(token)},
-			logger_{std::move(logger)}
-	{ }
+	Ensenso(NxLibItem & camera_node, std::optional<NxLibItem> monocular_node, NxLibInitToken token, LogFunction logger) :
+		stereo_node{std::move(camera_node)},
+		monocular_node{std::move(monocular_node)},
+		init_token_{std::move(token)},
+		logger_{std::move(logger)}
+	{}
 
 	// Open an ensenso camera.
 	static Result<OpenCameraReturn> open(std::string serial = "", bool connect_monocular = true, LogFunction log = nullptr, NxLibInitToken token = nullptr);

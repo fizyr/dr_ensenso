@@ -61,6 +61,10 @@ Result<void> executeNx(NxLibCommand const & command);
 /// Check if an item exists in the NxTree
 Result<bool> existsNx(NxLibItem const & item);
 
+// Error functions
+std::string getNxErrorName(int error);
+std::string getNxErrorDescription(int error);
+std::string getNxErrorWithDescription(int error);
 std::string composeTreeReadErrorMessage(int error, NxLibItem const & item);
 std::string composeTreeWriteErrorMessage(int error, NxLibItem const & item);
 

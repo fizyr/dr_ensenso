@@ -28,7 +28,7 @@ NxLibInitGuard & NxLibInitGuard::operator=(NxLibInitGuard && other) {
 Result<NxLibInitToken> NxLibInitGuard::initNxLib() {
 	int error = 0;
 	nxLibInitialize(error);
-	if (error) estd::error("failed to initialize nx lib");
+	if (error) return estd::error("failed to initialize nx lib: " + getNxErrorWithDescription(error));
 
 	return NxLibInitGuard::create_shared();
 }

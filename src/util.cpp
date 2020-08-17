@@ -204,12 +204,12 @@ Result<void> writeNxJsonToFile(NxLibItem const & item, std::string const & filen
 	return estd::in_place_valid;
 }
 
-std::string composeTreeReadErrorMessage(int error, NxLibItem & item) {
-	return "failed to read from NxLibTree at path: " + item.path + " : " + nxLibTranslateReturnCode(error);
+std::string composeTreeReadErrorMessage(int error, NxLibItem const & item) {
+	return "failed to read from NxLibTree at path: " + item.path + " " + getNxErrorWithDescription(error);
 }
 
-std::string composeTreeWriteErrorMessage(int error, NxLibItem & item) {
-	return "failed to write to NxLibTree at path: " + item.path + " : " + nxLibTranslateReturnCode(error);
+std::string composeTreeWriteErrorMessage(int error, NxLibItem const & item) {
+	return "failed to write to NxLibTree at path: " + item.path + " " + getNxErrorWithDescription(error);
 }
 
 Result<std::string> composeCommandErrorMessage(NxLibItem const & result) {
@@ -224,6 +224,41 @@ Result<std::string> composeCommandErrorMessage(NxLibItem const & result) {
 
 
 	return "failed to execute NxLibCommand " + *command + ": error " + *error_symbol + ": " + *error_text;
+}
+
+std::string getNxErrorWithDescription(int error) {
+	return "error name: " + getNxErrorName(error) + "error description: " + getNxErrorDescription(error);
+}
+
+std::string getNxErrorName(int error) {
+	switch (error) {
+		case NxLibOperationSucceeded:              return "NxLibOperationSucceeded";
+		case NxLibCannotCreateItem:                return "NxLibCannotCreateItem";
+		case NxLibCouldNotInterpretJsonText:       return "NxLibCannotCreateItem";
+		case NxLibItemInexistent:                  return "NxLibItemInexistent";
+		case NxLibCouldNotOpenPort:                return "NxLibCouldNotOpenPort";
+		case NxLibInternalError:                   return "NxLibInternalError";
+		case NxLibTimeout:                         return "NxLibTimeout";
+		case NxLibNotConnected:                    return "NxLibNotConnected";
+		case NxLibItemTypeNotCompatible:           return "NxLibItemTypeNotCompatible";
+		case NxLibBufferTooSmall:                  return "NxLibBufferTooSmall";
+		case NxLibBufferNotDivisibleByElementSize: return "NxLibBufferNotDivisibleByElementSize";
+		case NxLibExecutionFailed:                 return "NxLibExecutionFailed";
+		case NxLibDebugMessageOverflow:            return "NxLibDebugMessageOverflow";
+		case NxLibNoDebugData:                     return "NxLibNoDebugData";
+		case NxLibInvalidBufferSize:               return "NxLibInvalidBufferSize";
+		case NxLibMethodInvalid:                   return "NxLibMethodInvalid";
+		case NxLibBadRequest:                      return "NxLibBadRequest";
+		case NxLibConnectionNotCompatible:         return "NxLibConnectionNotCompatible";
+		case NxLibInitializationNotAllowed:        return "NxLibInitializationNotAllowed";
+		case NxLibNestingLimitReached:             return "NxLibNestingLimitReached";
+		case NxLibNoOpenProfileBlock:              return "NxLibNoOpenProfileBlock";
+	}
+	return "unknown error";
+}
+
+std::string getNxErrorDescription(int error) {
+	return nxLibTranslateReturnCode(error);
 }
 
 }
