@@ -358,23 +358,23 @@ Result<void> Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, 
 	NxLibCommand command(trigger ? cmdCapture : cmdRetrieve);
 
 	Result<void> set_timeout_param = setNx(command.parameters()[itmTimeout], int(timeout));
-	if (!set_timeout_param) return set_timeout_param.error().push_description("failed to retrieve");
+	if (!set_timeout_param) return set_timeout_param.error().push_description("failed set timeout for retrieving camera data");
 
 	if (stereo) {
 		Result<std::string> serial_number = serialNumber();
-		if (!serial_number) return serial_number.error().push_description("failed to retrieve");
+		if (!serial_number) return serial_number.error().push_description("failed to determine stereo camera serial number");
 		stereo_serial_number = *serial_number;
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][0], stereo_serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to retrieve");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to configure stereo camera serial number on retrieve command");
 	}
 	if (monocular) {
 		Result<std::string> serial_number = monocularSerialNumber();
-		if (!serial_number) return serial_number.error().push_description("failed to retrieve");
+		if (!serial_number) return serial_number.error().push_description("failed to determine monocular camera serial number");
 		mono_serial_number = *serial_number;
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][stereo ? 1 : 0], mono_serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to retrieve");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to configure monocular camera serial number on retrieve command");
 	}
 
 	Result<void> execute_retrieve = executeNx(command);
@@ -382,11 +382,11 @@ Result<void> Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, 
 
 	if (stereo) {
 		Result<bool> get_retrieved = getNx<bool>(command.result()[stereo_serial_number][itmRetrieved]);
-		if (!get_retrieved && !*get_retrieved) return get_retrieved.error().push_description("failed to retrieve stereo results");
+		if (!get_retrieved && !*get_retrieved) return get_retrieved.error().push_description("failed to retrieve stereo camera data");
 	}
 	if (monocular) {
 		Result<bool> get_retrieved = getNx<bool>(command.result()[mono_serial_number][itmRetrieved]);
-		if (!get_retrieved && !*get_retrieved) return get_retrieved.error().push_description("failed to retrieve monocular results");
+		if (!get_retrieved && !*get_retrieved) return get_retrieved.error().push_description("failed to retrieve monocular camera data");
 	}
 
 	return estd::in_place_valid;
@@ -396,17 +396,17 @@ Result<void> Ensenso::rectifyImages(bool stereo, bool monocular) {
 	NxLibCommand command(cmdRectifyImages);
 	if (stereo) {
 		Result<std::string> serial_number = serialNumber();
-		if (!serial_number) return serial_number.error().push_description("failed to rectify stereo camera");
+		if (!serial_number) return serial_number.error().push_description("failed to determine stereo camera serial number");
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][0], *serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to rectify stereo camera");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to configure stereo camera serial number on rectify command");
 	}
 	if (monocular) {
 		Result<std::string> serial_number = monocularSerialNumber();
-		if (!serial_number) return serial_number.error().push_description("failed to rectify monocular camera");
+		if (!serial_number) return serial_number.error().push_description("failed to determine monocular camera serial number");
 
 		Result<void> set_camera_param = setNx(command.parameters()[itmCameras][stereo ? 1 : 0], *serial_number);
-		if (!set_camera_param) return set_camera_param.error().push_description("failed to rectify monocular camera");
+		if (!set_camera_param) return set_camera_param.error().push_description("failed to configure monocular camera serial number on rectify command");
 	}
 
 	return executeNx(command);
