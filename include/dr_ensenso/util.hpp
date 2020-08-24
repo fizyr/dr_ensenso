@@ -1,12 +1,11 @@
 #pragma once
-#include "error.hpp"
+#include "types.hpp"
 
 #include <ensenso/nxLib.h>
 
 #include <cstdint>
 #include <functional>
 #include <optional>
-#include <stdexcept>
 #include <string>
 
 
@@ -33,88 +32,75 @@ std::optional<NxLibItem> findCameraByType(std::string const & type, LogFunction 
 
 /// Find and open a camera by serial number.
 /**
- * \return The NxLibItem representing the found camera or an empty optional.
- * \throws if opening the camera fails.
+ * \return the NxLibItem representing the found camera or an empty optional.
  */
-std::optional<NxLibItem> openCameraBySerial(std::string const & serial);
+Result<NxLibItem> openCameraBySerial(std::string const & serial);
 
 /// Find and open a camera by eeprom ID.
 /**
- * \return The NxLibItem representing the found camera or an empty optional.
- * \throws if opening the camera fails.
+ * \return the NxLibItem representing the found camera or an empty optional.
  */
-std::optional<NxLibItem> openCameraByEepromId(int eeprom_id);
+Result<NxLibItem> openCameraByEepromId(int eeprom_id);
 
 /// Find and open a camera that is linked to another camera given by serial.
 /**
- * \return The NxLibItem representing the found camera or an empty optional.
- * \throws if opening the camera fails.
+ * \return the NxLibItem representing the found camera or an empty optional.
  */
-std::optional<NxLibItem> openCameraByLink(std::string const & serial, LogFunction logger = nullptr);
+Result<NxLibItem> openCameraByLink(std::string const & serial, LogFunction logger = nullptr);
 
 /// Find and open a camera by type.
 /**
  * If multiple cameras of the requested type are available, it is unspecified which one will be selected.
- * \return An NxLibItem representing a camera of the requested type if one can be found.
- * \throws if opening the camera fails.
+ * \return the NxLibItem representing the found camera or an empty optional.
  */
-std::optional<NxLibItem> openCameraByType(std::string const & type, LogFunction logger = nullptr);
+Result<NxLibItem> openCameraByType(std::string const & type, LogFunction logger = nullptr);
 
 /// Execute an NxLibCommand.
-/**
- * \throw NxError on failure.
- */
-void executeNx(NxLibCommand const & command, std::string const & what = "");
+Result<void> executeNx(NxLibCommand const & command);
+
+/// Check if an item exists in the NxTree
+Result<bool> existsNx(NxLibItem const & item);
+
+// Error functions
+std::string getNxErrorName(int error);
+std::string getNxErrorDescription(int error);
+std::string getNxErrorWithDescription(int error);
+std::string composeTreeReadErrorMessage(int error, NxLibItem const & item);
+std::string composeTreeWriteErrorMessage(int error, NxLibItem const & item);
+
+Result<std::string> composeCommandErrorMessage(NxLibItem const & result);
 
 /// Get the value of an NxLibItem as the specified type.
-/**
- * \throw NxError on failure.
- */
 template<typename T>
-T getNx(NxLibItem const & item, std::string const & what = "") {
+Result<T> getNx(NxLibItem const & item) {
 	int error = 0;
 	T result = item.as<T>(&error);
-	if (error) throw NxError(item, error, what);
+	if (error) return estd::error(composeTreeReadErrorMessage(error, item));
 	return result;
 }
 
-/// Get the timestamp of a binary node as microseconds since January 1 1970 UTC.
-std::int64_t getNxBinaryTimestamp(NxLibItem const & item, std::string const & what = "");
-
 /// Set the value of an NxLibItem.
-/**
- * \throw NxError on failure.
- */
 template<typename T>
-void setNx(NxLibItem const & item, T const & value, std::string const & what = "") {
+Result<void> setNx(NxLibItem const & item, T const & value) {
 	int error = 0;
 	item.set(&error, value);
-	if (error) throw NxError(item, error, what);
+	if (error) return estd::error(composeTreeWriteErrorMessage(error, item));
+	return estd::in_place_valid;
 }
 
+/// Get the timestamp of a binary node as microseconds since January 1 1970 UTC.
+Result<std::int64_t> getNxBinaryTimestamp(NxLibItem const & item);
+
 /// Set the value of an NxLibItem to a JSON tree.
-/**
- * \throw NxError on failure.
- */
-void setNxJson(NxLibItem const & item, std::string const & json, std::string const & what = "");
+Result<void> setNxJson(NxLibItem const & item, std::string const & json);
 
 /// Set the value of an NxLibItem to a JSON tree from a file.
-/**
- * \return False if the file was not good (ie. could not be opened or does not exist).
- * \throw NxError on failure.
- */
-bool setNxJsonFromFile(NxLibItem const & item, std::string const & filename, std::string const & what = "");
+Result<void> setNxJsonFromFile(NxLibItem const & item, std::string const & filename);
 
 /// Get the value of an NxLibItem as a JSON tree.
-/**
- * \throw NxError on failure.
- */
-std::string getNxJson(NxLibItem const & item, std::string const & what = "");
+Result<std::string> getNxJson(NxLibItem const & item);
 
 /// Get the value of an NxLibItem as JSON tree and write it to a file.
-/**
- * \throw NxError on failure.
- */
-void writeNxJsonToFile(NxLibItem const & item, std::string const & filename, std::string const & what = "");
+Result<void> writeNxJsonToFile(NxLibItem const & item, std::string const & filename);
 
 }
