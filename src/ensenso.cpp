@@ -240,8 +240,13 @@ bool Ensenso::hasFlexView() const {
 	return *flex_view_exists;
 }
 
-Result<int> Ensenso::flexView() const {
-	return getNx<int>(stereo_node[itmParameters][itmCapture][itmFlexView]);
+int Ensenso::flexView() const {
+	// in case FlexView = false, getting the int value gives an error
+	Result<int> flexview = getNx<int>(stereo_node[itmParameters][itmCapture][itmFlexView]);
+	if (!flexview) {
+		return -1;
+	}
+	return *flexview;
 }
 
 Result<void> Ensenso::setFlexView(int value) {
