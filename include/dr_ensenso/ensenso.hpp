@@ -156,7 +156,7 @@ public:
 	bool hasFlexView() const;
 
 	/// Returns the current FlexView value. If disabled, returns -1.
-	Result<int> flexView() const;
+	int flexView() const;
 
 	/// Sets the Ensenso camera FlexView value.
 	Result<void> setFlexView(int value);
