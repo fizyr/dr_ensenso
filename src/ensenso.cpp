@@ -653,6 +653,10 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	bool moving,
 	std::optional<Eigen::Isometry3d> const & camera_guess,
 	std::optional<Eigen::Isometry3d> const & pattern_guess,
+	std::optional<std::array<bool, 3>> const & translation_camera_fixed,
+	std::optional<std::array<bool, 3>> const & rotation_camera_fixed,
+	std::optional<std::array<bool, 3>> const & translation_pattern_fixed,
+	std::optional<std::array<bool, 3>> const & rotation_pattern_fixed,
 	std::string const & target,
 	std::string * parameters_dump_info,
 	std::string * result_dump_info
@@ -671,6 +675,34 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 		Eigen::Isometry3d scaled_pattern_guess = *pattern_guess;
 		scaled_pattern_guess.translation() *= 1000;
 		setNx(calibrate.parameters()[itmPatternPose], scaled_pattern_guess);
+	}
+
+	// set fixed camera translation axes
+	if (translation_camera_fixed) {
+		setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][0], (*translation_camera_fixed)[0]);
+		setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][1], (*translation_camera_fixed)[1]);
+		setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][2], (*translation_camera_fixed)[2]);
+	}
+
+	// set fixed camera rotation axes
+	if (rotation_camera_fixed) {
+		setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][0], (*rotation_camera_fixed)[0]);
+		setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][1], (*rotation_camera_fixed)[1]);
+		setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][2], (*rotation_camera_fixed)[2]);
+	}
+
+	// set fixed pattern translation axes
+	if (translation_pattern_fixed) {
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][0], (*translation_pattern_fixed)[0]);
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][1], (*translation_pattern_fixed)[1]);
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][2], (*translation_pattern_fixed)[2]);
+	}
+
+	// set fixed pattern rotation axes
+	if (rotation_pattern_fixed) {
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][0], (*rotation_pattern_fixed)[0]);
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][1], (*rotation_pattern_fixed)[1]);
+		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][2], (*rotation_pattern_fixed)[2]);
 	}
 
 	// setup (camera in hand / camera fixed)
