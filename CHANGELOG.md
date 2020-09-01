@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - Get rid of NxLibException calls and use the return value to wrap the API Calls in estd::result.
 - Created two function to construct an ensenso object, one of them creating a shared_ptr object. Default constructor hidden.
 - Improved overall error messages and handling.
+- Expose "Fixed", useful for calibrating systems with lesser than 6 DOFs.
 
 ## 0.3.3 - 2020-07-30
 ### Changed
