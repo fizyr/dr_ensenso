@@ -643,6 +643,7 @@ Result<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
 	// convert from mm to m
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(stereo_node[itmLink]);
 	if (!pose) return pose.error().push_description("failed to retrieve workspace calibration");
+	pose->inverse(); // "Link" is the pose of the world w.r.t. the camera.
 	pose->translation() *= 0.001;
 
 	return pose;
