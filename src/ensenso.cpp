@@ -539,16 +539,29 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 	// disable FlexView
 	Result<int> flex_view = flexView();
 	if (!flex_view) return flex_view.error();
-	if (*flex_view > 0) setFlexView(0);
+	if (*flex_view > 0) {
+		Result<void> flex_view_result = setFlexView(0);
+		if (!flex_view_result) return flex_view_result.error().push_description("failed to disable FlexView");
+	}
 
 	// Capture image with front-light.
-	setProjector(false);
-	if (hasFrontLight()) setFrontLight(true);
+	Result<void> projector_off_result = setProjector(false);
+	if (!projector_off_result) return projector_off_result.error().push_description("failed to set projector state");
+	if (hasFrontLight()) {
+		Result<void> front_light_on_result = setFrontLight(true);
+		if (!front_light_on_result) return front_light_on_result.error().push_description("failed to set front light state");
+	}
 
-	retrieve(true, 1500, true, false);
+	Result<void> retrieve_result = retrieve(true, 1500, true, false);
+	if (!retrieve_result) return retrieve_result.error().push_description("failed to retrieve image");
 
-	if (hasFrontLight()) setFrontLight(false);
-	setProjector(true);
+	if (hasFrontLight()) {
+		Result<void> front_light_off_result = setFrontLight(false);
+		if (!front_light_off_result) return front_light_off_result.error().push_description("failed to set front light state");
+	}
+	Result<void> projector_on_result = setProjector(true);
+	if (!projector_on_result) return projector_on_result.error().push_description("failed to set projector state");
+
 
 	Result<std::string> serial_number_result = serialNumber();
 	if (!serial_number_result) return serial_number_result.error().push_description("failed to determine stereo camera serial number");
@@ -575,7 +588,8 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 
 	// restore FlexView setting
 	if (*flex_view > 0) {
-		setFlexView(*flex_view);
+		Result<void> set_flex_view_result = setFlexView(*flex_view);
+		if (!set_flex_view_result) return set_flex_view_result.error().push_description("failed to restore FlexView settings");
 	}
 
 	// Optionally copy the result for debugging.
@@ -600,7 +614,10 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 	// Disable FlexView (should not be necessary here, but appears to be necessary for cmdEstimatePatternPose)
 	Result<int> flex_view = flexView();
 	if (!flex_view) return flex_view.error();
-	if (*flex_view > 0) setFlexView(0);
+	if (*flex_view > 0) {
+		Result<void> disable_flex_view_result = setFlexView(0);
+		if (!disable_flex_view_result) return disable_flex_view_result.error().push_description("failed to disable FlexView");
+	}
 
 	// Get the pose of the pattern.
 	NxLibCommand command_estimate_pose(cmdEstimatePatternPose);
@@ -609,7 +626,8 @@ Result<Eigen::Isometry3d> Ensenso::detectCalibrationPattern(int const samples, b
 
 	// Restore FlexView setting.
 	if (*flex_view > 0) {
-		setFlexView(*flex_view);
+		Result<void> set_flex_view_result = setFlexView(*flex_view);
+		if (!set_flex_view_result) return set_flex_view_result.error().push_description("failed to restore FlexView settings");
 	}
 
 	Result<Eigen::Isometry3d> eigen_isometry = toEigenIsometry(command_estimate_pose.result()["Patterns"][0][itmPatternPose]);
@@ -668,42 +686,48 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	if (camera_guess) {
 		Eigen::Isometry3d scaled_camera_guess = *camera_guess;
 		scaled_camera_guess.translation() *= 1000;
-		setNx(calibrate.parameters()[itmLink], scaled_camera_guess);
+		Result<void> set_nx_initial_result = setNx(calibrate.parameters()[itmLink], scaled_camera_guess);
+		if (!set_nx_initial_result) return set_nx_initial_result.error().push_description("failed to configure camera pose initial guess on compute calibration command");
 	}
 
 	// pattern pose initial guess
 	if (pattern_guess) {
 		Eigen::Isometry3d scaled_pattern_guess = *pattern_guess;
 		scaled_pattern_guess.translation() *= 1000;
-		setNx(calibrate.parameters()[itmPatternPose], scaled_pattern_guess);
+		Result<void> set_nx_initial_result = setNx(calibrate.parameters()[itmPatternPose], scaled_pattern_guess);
+		if (!set_nx_initial_result) return set_nx_initial_result.error().push_description("failed to configure pattern pose initial guess on compute calibration command");
 	}
 
 	// set fixed camera translation axes
 	if (translation_camera_fixed) {
-		setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][0], (*translation_camera_fixed)[0]);
-		setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][1], (*translation_camera_fixed)[1]);
-		setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][2], (*translation_camera_fixed)[2]);
+		for (int i = 0; i < 3; i++) {
+			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][i], (*translation_camera_fixed)[i]);
+			if (!set_nx_result) return set_nx_result.error().push_description("failed to configure camera tranlsation axis on compute calibration command");
+		}
 	}
 
 	// set fixed camera rotation axes
 	if (rotation_camera_fixed) {
-		setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][0], (*rotation_camera_fixed)[0]);
-		setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][1], (*rotation_camera_fixed)[1]);
-		setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][2], (*rotation_camera_fixed)[2]);
+		for (int i = 0; i < 3; i++) {
+			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][i], (*rotation_camera_fixed)[i]);
+			if (!set_nx_result) return set_nx_result.error().push_description("failed to configure camera rotation axis on compute calibration command");
+		}
 	}
 
 	// set fixed pattern translation axes
 	if (translation_pattern_fixed) {
-		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][0], (*translation_pattern_fixed)[0]);
-		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][1], (*translation_pattern_fixed)[1]);
-		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][2], (*translation_pattern_fixed)[2]);
+		for (int i = 0; i < 3; i++) {
+			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][i], (*translation_pattern_fixed)[i]);
+			if (!set_nx_result) return set_nx_result.error().push_description("failed to configure pattern translation axis on compute calibration command");
+		}
 	}
 
 	// set fixed pattern rotation axes
 	if (rotation_pattern_fixed) {
-		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][0], (*rotation_pattern_fixed)[0]);
-		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][1], (*rotation_pattern_fixed)[1]);
-		setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][2], (*rotation_pattern_fixed)[2]);
+		for (int i = 0; i < 3; i++) {
+			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][i], (*rotation_pattern_fixed)[i]);
+			if (!set_nx_result) return set_nx_result.error().push_description("failed to configure pattern rotation axis on compute calibration command");
+		}
 	}
 
 	// setup (camera in hand / camera fixed)
