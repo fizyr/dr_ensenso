@@ -559,6 +559,7 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 		Result<void> front_light_off_result = setFrontLight(false);
 		if (!front_light_off_result) return front_light_off_result.error().push_description("failed to set front light state");
 	}
+
 	Result<void> projector_on_result = setProjector(true);
 	if (!projector_on_result) return projector_on_result.error().push_description("failed to set projector state");
 
