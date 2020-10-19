@@ -643,7 +643,7 @@ Result<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
 	// convert from mm to m
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(stereo_node[itmLink]);
 	if (!pose) return pose.error().push_description("failed to retrieve workspace calibration");
-	pose->inverse(); // "Link" is the pose of the world w.r.t. the camera.
+	pose = pose->inverse(); // "Link" is the pose of the world w.r.t. the camera.
 	pose->translation() *= 0.001;
 
 	return pose;
@@ -738,7 +738,7 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	// return result (camera pose, pattern pose, iterations, reprojection error)
 	Result<Eigen::Isometry3d> camera_pose  = toEigenIsometry(stereo_node[itmLink]);
 	if (!camera_pose) camera_pose.error().push_description("failed to retrieve camera pose");
-	camera_pose->inverse(); // "Link" is inverted
+	camera_pose = camera_pose->inverse(); // "Link" is the pose of the world w.r.t. the camera.
 
 	Result<Eigen::Isometry3d> pattern_pose = toEigenIsometry(calibrate.result()[itmPatternPose]);
 	if (!pattern_pose) pattern_pose.error().push_description("failed to retrieve patter pose");
