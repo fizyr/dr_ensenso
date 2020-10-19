@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## master -
 
+## 1.0.1 - 2020-10-19
+### Changed
+- Store the correct inverse of the respective poses.
+
 ## 1.0.0 - 2020-10-06
 ### Changed
 - Return the inverse of the pose stored in the Link of the stereo node as a result of workspace calibration.
