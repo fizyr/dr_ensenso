@@ -540,28 +540,24 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 	Result<int> flex_view = flexView();
 	if (!flex_view) return flex_view.error();
 	if (*flex_view > 0) {
-		Result<void> flex_view_result = setFlexView(0);
-		if (!flex_view_result) return flex_view_result.error().push_description("failed to disable FlexView");
+		if (estd::error err = setFlexView(0).error_or()) return err.push_description("failed to disable FlexView");
 	}
 
 	// Capture image with front-light.
-	Result<void> projector_off_result = setProjector(false);
-	if (!projector_off_result) return projector_off_result.error().push_description("failed to set projector state");
-	if (hasFrontLight()) {
-		Result<void> front_light_on_result = setFrontLight(true);
-		if (!front_light_on_result) return front_light_on_result.error().push_description("failed to set front light state");
-	}
-
-	Result<void> retrieve_result = retrieve(true, 1500, true, false);
-	if (!retrieve_result) return retrieve_result.error().push_description("failed to retrieve image");
+	if (estd::error err = setProjector(false).error_or()) return err.push_description("failed to set projector state before image acquisition");
 
 	if (hasFrontLight()) {
-		Result<void> front_light_off_result = setFrontLight(false);
-		if (!front_light_off_result) return front_light_off_result.error().push_description("failed to set front light state");
+		if (estd::error err = setFrontLight(true).error_or()) return err.push_description("failed to set front light state before image acquisition");
 	}
 
-	Result<void> projector_on_result = setProjector(true);
-	if (!projector_on_result) return projector_on_result.error().push_description("failed to set projector state");
+	if (estd::error err = retrieve(true, 1500, true, false).error_or()) return err.push_description("failed to retrieve image");
+
+	if (hasFrontLight()) {
+		if (estd::error err = setFrontLight(false).error_or()) return err.push_description("failed to set front light state after image acquisition");
+	}
+
+	if (estd::error err = setProjector(true).error_or()) return err.push_description("failed to set projector state after image acquisition");
+
 
 
 	Result<std::string> serial_number_result = serialNumber();
@@ -589,8 +585,7 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 
 	// restore FlexView setting
 	if (*flex_view > 0) {
-		Result<void> set_flex_view_result = setFlexView(*flex_view);
-		if (!set_flex_view_result) return set_flex_view_result.error().push_description("failed to restore FlexView settings");
+		if (estd::error err = setFlexView(*flex_view).error_or()) return err.push_description("failed to restore FlexView settings");
 	}
 
 	// Optionally copy the result for debugging.
@@ -703,7 +698,7 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	if (translation_camera_fixed) {
 		for (int i = 0; i < 3; i++) {
 			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][i], (*translation_camera_fixed)[i]);
-			if (!set_nx_result) return set_nx_result.error().push_description("failed to configure camera tranlsation axis on compute calibration command");
+			if (!set_nx_result) return set_nx_result.error().push_description("failed to fix camera translation component: " + std::to_string(i));
 		}
 	}
 
@@ -711,7 +706,7 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	if (rotation_camera_fixed) {
 		for (int i = 0; i < 3; i++) {
 			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][i], (*rotation_camera_fixed)[i]);
-			if (!set_nx_result) return set_nx_result.error().push_description("failed to configure camera rotation axis on compute calibration command");
+			if (!set_nx_result) return set_nx_result.error().push_description("failed to fix camera rotation component: " + std::to_string(i));
 		}
 	}
 
@@ -719,7 +714,7 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	if (translation_pattern_fixed) {
 		for (int i = 0; i < 3; i++) {
 			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][i], (*translation_pattern_fixed)[i]);
-			if (!set_nx_result) return set_nx_result.error().push_description("failed to configure pattern translation axis on compute calibration command");
+			if (!set_nx_result) return set_nx_result.error().push_description("failed to fix pattern translation component: " + std::to_string(i));
 		}
 	}
 
@@ -727,7 +722,7 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	if (rotation_pattern_fixed) {
 		for (int i = 0; i < 3; i++) {
 			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][i], (*rotation_pattern_fixed)[i]);
-			if (!set_nx_result) return set_nx_result.error().push_description("failed to configure pattern rotation axis on compute calibration command");
+			if (!set_nx_result) return set_nx_result.error().push_description("failed to fix pattern rotation component: " + std::to_string(i));
 		}
 	}
 
