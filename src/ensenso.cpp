@@ -28,7 +28,7 @@ NxLibInitGuard & NxLibInitGuard::operator=(NxLibInitGuard && other) {
 Result<NxLibInitToken> NxLibInitGuard::initNxLib() {
 	int error = 0;
 	nxLibInitialize(error);
-	if (error) return estd::error("failed to initialize nx lib: " + getNxErrorWithDescription(error));
+	if (error) return Error("failed to initialize nx lib: " + getNxErrorWithDescription(error));
 
 	return NxLibInitGuard::create_shared();
 }
@@ -44,7 +44,7 @@ Result<NxLibItem> imageNode(NxLibItem stereo, std::optional<NxLibItem> monocular
 		case ImageType::monocular_rectified:         return (*monocular)[itmImages][itmRectified];
 		case ImageType::monocular_overlay:           return (*monocular)[itmImages][itmWithOverlay];
 	}
-	return estd::error("failed to get image node: unknown image type: " + std::to_string(int(type)));
+	return Error("failed to get image node: unknown image type: " + std::to_string(int(type)));
 }
 
 Result<std::shared_ptr<Ensenso>> Ensenso::openSharedCamera(std::string serial, bool connect_monocular, LogFunction logger, NxLibInitToken token) {
@@ -137,7 +137,7 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 	file.open(parameters_file);
 
 	if (!file.good()) {
-		return estd::error("failed to load parameters: file can't be opened");
+		return Error("failed to load parameters: file can't be opened");
 	}
 
 	file.exceptions(std::ios::failbit | std::ios::badbit);
@@ -146,12 +146,12 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 	try {
 		file >> root;
 	} catch (std::exception &e) {
-		return estd::error(fmt::format("failed to load parameters: {}", e.what()));
+		return Error(fmt::format("failed to load parameters: {}", e.what()));
 	}
 
 	if (entire_tree) {
 		if (!root.isMember("Parameters")) {
-			return estd::error("failed to load parameters: requested to load an entire tree, but the input did not contain an entire tree");
+			return Error("failed to load parameters: requested to load an entire tree, but the input did not contain an entire tree");
 		}
 
 		Result<void> set_nx_json_result = setNxJson(stereo_node, Json::writeString(Json::StreamWriterBuilder(), root));
@@ -177,14 +177,14 @@ Result<void> Ensenso::loadParameters(std::string const parameters_file, bool ent
 
 Result<void> Ensenso::loadMonocularParameters(std::string const parameters_file, bool entire_tree) {
 	if (!monocular_node) {
-		return estd::error("failed to load json parameters: no monocular camera found");
+		return Error("failed to load json parameters: no monocular camera found");
 	}
 
 	std::ifstream file;
 	file.open(parameters_file);
 
 	if (!file.good()) {
-		return estd::error("failed to load json parameters: file can't be opened");
+		return Error("failed to load json parameters: file can't be opened");
 	}
 
 	file.exceptions(std::ios::failbit | std::ios::badbit);
@@ -193,12 +193,12 @@ Result<void> Ensenso::loadMonocularParameters(std::string const parameters_file,
 	try {
 		file >> root;
 	} catch (std::exception &e) {
-		return estd::error(fmt::format("failed to load json parameters: {}", e.what()));
+		return Error(fmt::format("failed to load json parameters: {}", e.what()));
 	}
 
 	if (entire_tree) {
 		if (!root.isMember("Parameters")) {
-			return estd::error("failed to load json parameters: requested to load an entire tree, but the input did not contain an entire tree");
+			return Error("failed to load json parameters: requested to load an entire tree, but the input did not contain an entire tree");
 		}
 
 		Result<void> set_json = setNxJson(monocular_node.value(), Json::writeString(Json::StreamWriterBuilder(), root));
@@ -222,7 +222,7 @@ Result<void> Ensenso::loadMonocularParameters(std::string const parameters_file,
 
 Result<void> Ensenso::loadMonocularUeyeParameters(std::string const parameters_file) {
 	if (!monocular_node) {
-		return estd::error("failed to load ueye parameters: no monocular camera found");
+		return Error("failed to load ueye parameters: no monocular camera found");
 	}
 	NxLibCommand command(cmdLoadUEyeParameterSet);
 
@@ -356,7 +356,7 @@ Result<void> Ensenso::retrieve(bool trigger, unsigned int timeout, bool stereo, 
 	monocular = monocular && monocular_node;
 
 	// nothing to do?
-	if (!stereo && !monocular) return estd::error("failed to retrieve: neither stereo or monucular is specified");
+	if (!stereo && !monocular) return Error("failed to retrieve: neither stereo or monucular is specified");
 
 	std::string stereo_serial_number = "";
 	std::string mono_serial_number = "";
@@ -443,7 +443,7 @@ Result<void> Ensenso::computePointCloud() {
 }
 
 Result<void> Ensenso::registerPointCloud() {
-	if (!monocular_node) return estd::error("failed to register point cloud: monocular camera is not attached");
+	if (!monocular_node) return Error("failed to register point cloud: monocular camera is not attached");
 
 	NxLibCommand command(cmdRenderPointMap);
 
@@ -540,23 +540,23 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 	Result<int> flex_view = flexView();
 	if (!flex_view) return flex_view.error();
 	if (*flex_view > 0) {
-		if (estd::error err = setFlexView(0).error_or()) return err.push_description("failed to disable FlexView");
+		if (Error err = setFlexView(0).error_or()) return err.push_description("failed to disable FlexView");
 	}
 
 	// Capture image with front-light.
-	if (estd::error err = setProjector(false).error_or()) return err.push_description("failed to set projector state before image acquisition");
+	if (Error err = setProjector(false).error_or()) return err.push_description("failed to set projector state before image acquisition");
 
 	if (hasFrontLight()) {
-		if (estd::error err = setFrontLight(true).error_or()) return err.push_description("failed to set front light state before image acquisition");
+		if (Error err = setFrontLight(true).error_or()) return err.push_description("failed to set front light state before image acquisition");
 	}
 
-	if (estd::error err = retrieve(true, 1500, true, false).error_or()) return err.push_description("failed to retrieve image");
+	if (Error err = retrieve(true, 1500, true, false).error_or()) return err.push_description("failed to retrieve image");
 
 	if (hasFrontLight()) {
-		if (estd::error err = setFrontLight(false).error_or()) return err.push_description("failed to set front light state after image acquisition");
+		if (Error err = setFrontLight(false).error_or()) return err.push_description("failed to set front light state after image acquisition");
 	}
 
-	if (estd::error err = setProjector(true).error_or()) return err.push_description("failed to set projector state after image acquisition");
+	if (Error err = setProjector(true).error_or()) return err.push_description("failed to set projector state after image acquisition");
 
 
 
@@ -585,7 +585,7 @@ Result<void> Ensenso::recordCalibrationPattern(std::string * parameters_dump_inf
 
 	// restore FlexView setting
 	if (*flex_view > 0) {
-		if (estd::error err = setFlexView(*flex_view).error_or()) return err.push_description("failed to restore FlexView settings");
+		if (Error err = setFlexView(*flex_view).error_or()) return err.push_description("failed to restore FlexView settings");
 	}
 
 	// Optionally copy the result for debugging.
@@ -652,7 +652,7 @@ std::string Ensenso::getWorkspaceCalibrationFrame() {
 
 Result<Eigen::Isometry3d> Ensenso::getWorkspaceCalibration() {
 	// Check if the camera is calibrated.
-	if (getWorkspaceCalibrationFrame().empty()) return estd::error("failed to retrieve workspace calibration: workspace calibration frame not set");
+	if (getWorkspaceCalibrationFrame().empty()) return Error("failed to retrieve workspace calibration: workspace calibration frame not set");
 
 	// convert from mm to m
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(stereo_node[itmLink]);
