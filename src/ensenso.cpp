@@ -682,47 +682,47 @@ Result<Ensenso::CalibrationResult> Ensenso::computeCalibration(
 	if (camera_guess) {
 		Eigen::Isometry3d scaled_camera_guess = *camera_guess;
 		scaled_camera_guess.translation() *= 1000;
-		Result<void> set_nx_initial_result = setNx(calibrate.parameters()[itmLink], scaled_camera_guess);
-		if (!set_nx_initial_result) return set_nx_initial_result.error().push_description("failed to configure camera pose initial guess on compute calibration command");
+		if (Error err = setNx(calibrate.parameters()[itmLink], scaled_camera_guess).error_or())
+			return err.push_description("failed to configure camera pose initial guess on compute calibration command");
 	}
 
 	// pattern pose initial guess
 	if (pattern_guess) {
 		Eigen::Isometry3d scaled_pattern_guess = *pattern_guess;
 		scaled_pattern_guess.translation() *= 1000;
-		Result<void> set_nx_initial_result = setNx(calibrate.parameters()[itmPatternPose], scaled_pattern_guess);
-		if (!set_nx_initial_result) return set_nx_initial_result.error().push_description("failed to configure pattern pose initial guess on compute calibration command");
+		if (Error err = setNx(calibrate.parameters()[itmPatternPose], scaled_pattern_guess).error_or())
+			return err.push_description("failed to configure pattern pose initial guess on compute calibration command");
 	}
 
 	// set fixed camera translation axes
 	if (translation_camera_fixed) {
 		for (int i = 0; i < 3; i++) {
-			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][i], (*translation_camera_fixed)[i]);
-			if (!set_nx_result) return set_nx_result.error().push_description("failed to fix camera translation component: " + std::to_string(i));
+			if (Error err = setNx(calibrate.parameters()[itmFixed][itmLink][itmTranslation][i], (*translation_camera_fixed)[i]).error_or())
+				return err.push_description("failed to fix camera translation component: " + std::to_string(i));
 		}
 	}
 
 	// set fixed camera rotation axes
 	if (rotation_camera_fixed) {
 		for (int i = 0; i < 3; i++) {
-			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][i], (*rotation_camera_fixed)[i]);
-			if (!set_nx_result) return set_nx_result.error().push_description("failed to fix camera rotation component: " + std::to_string(i));
+			if (Error err = setNx(calibrate.parameters()[itmFixed][itmLink][itmRotation][i], (*rotation_camera_fixed)[i]).error_or())
+				return err.push_description("failed to fix camera rotation component: " + std::to_string(i));
 		}
 	}
 
 	// set fixed pattern translation axes
 	if (translation_pattern_fixed) {
 		for (int i = 0; i < 3; i++) {
-			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][i], (*translation_pattern_fixed)[i]);
-			if (!set_nx_result) return set_nx_result.error().push_description("failed to fix pattern translation component: " + std::to_string(i));
+			if (Error err = setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmTranslation][i], (*translation_pattern_fixed)[i]).error_or())
+				return err.push_description("failed to fix pattern translation component: " + std::to_string(i));
 		}
 	}
 
 	// set fixed pattern rotation axes
 	if (rotation_pattern_fixed) {
 		for (int i = 0; i < 3; i++) {
-			Result<void> set_nx_result = setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][i], (*rotation_pattern_fixed)[i]);
-			if (!set_nx_result) return set_nx_result.error().push_description("failed to fix pattern rotation component: " + std::to_string(i));
+			if (Error err = setNx(calibrate.parameters()[itmFixed][itmPatternPose][itmRotation][i], (*rotation_pattern_fixed)[i]).error_or())
+				return err.push_description("failed to fix pattern rotation component: " + std::to_string(i));
 		}
 	}
 
