@@ -339,8 +339,14 @@ public:
 		std::string * result_dump_info = nullptr                     ///< If provided, copies the result to this string as json.
 	);
 
+	/// Returns the camera matrix of the ueye.
+	Result<Eigen::Matrix3d> getMonocularMatrix() const;
+
 	/// Returns the calibration between ueye and ensenso.
 	Result<Eigen::Isometry3d> getMonocularLink() const;
+
+	/// Returns the calibration between ensenso and the reference frame.
+	Result<Eigen::Isometry3d> getStereoLink() const;
 
 	/// Gets capture parameters.
 	Result<CaptureParams> getCaptureParameters(bool crop_to_roi = false);
