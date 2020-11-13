@@ -16,6 +16,23 @@ Result<Eigen::Vector3d> toEigenVector(NxLibItem const & item) {
 	return Eigen::Vector3d{*item_0, *item_1, *item_2};
 }
 
+Result<Eigen::Matrix3d> toEigenMatrix(NxLibItem const & item) {
+	auto coloumn_0 = toEigenVector(item[0]);
+	if (!coloumn_0) return coloumn_0.error();
+
+	auto coloumn_1 = toEigenVector(item[1]);
+	if (!coloumn_1) return coloumn_1.error();
+
+	auto coloumn_2 = toEigenVector(item[2]);
+	if (!coloumn_2) return coloumn_2.error();
+
+	Eigen::Matrix3d result;
+	result.col(0) = *coloumn_0;
+	result.col(1) = *coloumn_1;
+	result.col(2) = *coloumn_2;
+	return result;
+}
+
 Result<Eigen::Translation3d> toEigenTranslation(NxLibItem const & item) {
 	Result<Eigen::Vector3d> translation = toEigenVector(item);
 	if (!translation) return translation.error().push_description("failed to retrieve translation");
