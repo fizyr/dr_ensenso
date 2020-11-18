@@ -9,6 +9,9 @@ namespace dr {
 /// Convert an NxLibItem holding a 3D vector to an Eigen::Vector3d.
 Result<Eigen::Vector3d> toEigenVector(NxLibItem const & item);
 
+/// Convert an NxLibItem holding a 3x3 matrix to an Eigen::Matrix3d.
+Result<Eigen::Matrix3d> toEigenMatrix(NxLibItem const & item);
+
 /// Convert an NxLibItem holding a 3D vector to an Eigen::Translation3d.
 Result<Eigen::Translation3d> toEigenTranslation(NxLibItem const & item);
 

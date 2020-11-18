@@ -869,11 +869,27 @@ Result<void> Ensenso::storeWorkspaceCalibration() {
 	return executeNx(command);
 }
 
+Result<Eigen::Matrix3d> Ensenso::getMonocularMatrix() const {
+	auto matrix = toEigenMatrix(monocular_node.value()[itmCalibration][itmCamera]);
+	if (!matrix) return matrix.error().push_description("failed to get monocular camera matrix");
+
+	return *matrix;
+}
 
 Result<Eigen::Isometry3d> Ensenso::getMonocularLink() const {
 	// convert from mm to m
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(monocular_node.value()[itmLink]);
 	if (!pose) return pose.error().push_description("failed to get monocular link pose");
+
+	pose->translation() *= 0.001;
+
+	return pose;
+}
+
+Result<Eigen::Isometry3d> Ensenso::getStereoLink() const {
+	// convert from mm to m
+	Result<Eigen::Isometry3d> pose = toEigenIsometry(stereo_node[itmLink]);
+	if (!pose) return pose.error().push_description("failed to get stereo link pose");
 
 	pose->translation() *= 0.001;
 
