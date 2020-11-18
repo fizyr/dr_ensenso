@@ -345,7 +345,7 @@ public:
 	/// Returns the calibration between ueye and ensenso.
 	Result<Eigen::Isometry3d> getMonocularLink() const;
 
-	/// Returns the calibration between ensenso and the reference frame.
+	/// Returns the calibration between ensenso and the base frame.
 	Result<Eigen::Isometry3d> getStereoLink() const;
 
 	/// Gets capture parameters.

@@ -870,8 +870,10 @@ Result<void> Ensenso::storeWorkspaceCalibration() {
 }
 
 Result<Eigen::Matrix3d> Ensenso::getMonocularMatrix() const {
-	auto matrix = monocular_node.value()[itmCalibration][itmCamera];
-	return estd::in_place_valid;
+	auto matrix = toEigenMatrix(monocular_node.value()[itmCalibration][itmCamera]);
+	if (!matrix) return matrix.error().push_description("failed to get monocular camera matrix");
+
+	return *matrix;
 }
 
 Result<Eigen::Isometry3d> Ensenso::getMonocularLink() const {
