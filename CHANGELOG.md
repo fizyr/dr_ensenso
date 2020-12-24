@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## master
 
-## 0.1.0 - 2020-12-22
+## 1.1.0 - 2020-12-22
 ### Added
 - Method `getMonocularMatrix()` to get the intrinsic camera matrix of the monocular.
 - Method `getStereoLink()` to get the link between the stereo camera and the base frame.
