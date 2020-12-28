@@ -17,5 +17,4 @@
 	<depend>jsoncpp</depend>
 	<depend>fmt</depend>
 	<depend>estd</depend>
-	<depend>roscpp</depend>
 </package>
