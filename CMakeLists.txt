@@ -10,7 +10,6 @@ add_link_options(LINKER:--as-needed)
 
 find_package(catkin REQUIRED COMPONENTS
 	estd
-	roscpp
 )
 
 find_package(Ensenso REQUIRED)
