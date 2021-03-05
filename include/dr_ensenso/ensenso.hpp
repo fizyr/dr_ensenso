@@ -101,17 +101,19 @@ public:
 		return false;
 	}
 
-	static Result<std::shared_ptr<Ensenso>> openSharedCamera(std::string serial = "",
-			bool connect_monocular = true,
-			LogFunction log = nullptr,
-			NxLibInitToken token = nullptr
-		);
+	static Result<std::shared_ptr<Ensenso>> openSharedCamera(
+		std::string serial = "",
+		bool connect_monocular = true,
+		LogFunction log = nullptr,
+		NxLibInitToken token = nullptr
+	);
 
-	static Result<Ensenso> openCamera(std::string serial = "",
-			bool connect_monocular = true,
-			LogFunction log = nullptr,
-			NxLibInitToken token = nullptr
-		);
+	static Result<Ensenso> openCamera(
+		std::string serial = "",
+		bool connect_monocular = true,
+		LogFunction log = nullptr,
+		NxLibInitToken token = nullptr
+	);
 
 	/// Explicitly opt-in to default move semantics.
 	Ensenso(Ensenso &&)       = default;
@@ -160,6 +162,9 @@ public:
 
 	/// Sets the Ensenso camera FlexView value.
 	Result<void> setFlexView(int value);
+
+	/// Enable cuda computation and set its device.
+	Result<void> enableCuda(int device=0);
 
 	/// Check if the camera has a front light.
 	bool hasFrontLight() const;
