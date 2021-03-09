@@ -164,7 +164,7 @@ public:
 	Result<void> setFlexView(int value);
 
 	/// Enable cuda computation and set its device.
-	Result<void> enableCuda(int device=0);
+	Result<void> enableCuda(std::uint32_t device=0);
 
 	/// Check if the camera has a front light.
 	bool hasFrontLight() const;

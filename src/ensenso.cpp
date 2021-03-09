@@ -254,16 +254,16 @@ Result<void> Ensenso::setFlexView(int value) {
 	return setNx(stereo_node[itmParameters][itmCapture][itmFlexView], value);
 }
 
-Result<void> Ensenso::enableCuda(int device) {
+Result<void> Ensenso::enableCuda(std::uint32_t device) {
 	// Check if cuda is available.
 	if (!root[itmCUDA][itmAvailable].asBool()) return Error{"cuda not available"};
 
 	// Check if the selected device is available.
-	int num_devices = root[itmCUDA][itmDevices].count();
+	std::uint32_t num_devices = root[itmCUDA][itmDevices].count();
 	if (device >= num_devices) return Error{fmt::format("selected device {} exceeds maximum device id, {}", device, num_devices)};
 
 	// Set cuda device.
-	root[itmCUDA][itmDevice] = device;
+	root[itmCUDA][itmDevice] = int(device);
 
 	// Enable cuda.
 	root[itmCUDA][itmEnabled] = true;
