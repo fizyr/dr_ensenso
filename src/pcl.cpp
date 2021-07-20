@@ -9,12 +9,12 @@ namespace {
 }
 
 Result<void> pointCloudToBuffer(
-		NxLibItem const & item,
-		float* buf,
-		std::size_t width,
-		std::size_t height,
-		std::optional<cv::Rect> roi
-	) {
+	NxLibItem const & item,
+	float* buf,
+	std::size_t width,
+	std::size_t height,
+	std::optional<cv::Rect> roi
+) {
 	int error = 0;
 
 	// TODO: Move the item functions to util.cpp ??
