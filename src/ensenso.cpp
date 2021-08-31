@@ -838,9 +838,6 @@ Result<void> Ensenso::setWorkspaceCalibration(Eigen::Isometry3d const & workspac
 }
 
 Result<void> Ensenso::clearWorkspaceCalibration(bool store) {
-	// Check if the camera is calibrated.
-	if (getWorkspaceCalibrationFrame().empty()) return estd::in_place_valid;
-
 	// calling CalibrateWorkspace with no PatternPose and DefinedPose clears the workspace.
 	NxLibCommand command(cmdCalibrateWorkspace);
 
