@@ -347,10 +347,12 @@ public:
 	/// Returns the camera matrix of the monocular camera (ueye).
 	Result<Eigen::Matrix3d> getMonocularMatrix() const;
 
-	/// Returns the calibration between ueye and ensenso (specifically, the pose of the stereo camera in the monocular frame).
+	/// Returns the calibration link between the monocular camera (ueye) and the stereo camera (ensenso).
+	//  NOTE: the link represents the pose of the stereo camera in the monocular frame.
 	Result<Eigen::Isometry3d> getMonocularLink() const;
 
-	/// Returns the calibration between ensenso and the base frame (specifically, the pose of the base frame in the stereo frame).
+	/// Returns the calibration link between the stereo camera (ensenso) and the base frame.
+	//  NOTE: the link represents the pose of the base in the stereo frame.
 	Result<Eigen::Isometry3d> getStereoLink() const;
 
 	/// Returns the pose of the monocular camera in the stereo frame.

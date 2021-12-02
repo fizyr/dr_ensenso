@@ -1,3 +1,3 @@
 # Unreleased
-- [minor][change][pub] Clear calibration on empty frame names.
-- [minor][add] Add functions to retrieve the transformations between Mono -> Stereo, Stereo -> Mono, Stereo -> Base and Base -> Stereo.
+- [change][minor][pub] Clear calibration on empty frame names.
+- [add][minor] Add functions to retrieve the transformations between Mono -> Stereo, Stereo -> Mono, Stereo -> Base and Base -> Stereo.
