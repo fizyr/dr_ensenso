@@ -890,23 +890,45 @@ Result<Eigen::Matrix3d> Ensenso::getMonocularMatrix() const {
 }
 
 Result<Eigen::Isometry3d> Ensenso::getMonocularLink() const {
-	// convert from mm to m
+	// NOTE: Ensenso returns the pose of the stereo camera in the monocular frame.
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(monocular_node.value()[itmLink]);
 	if (!pose) return pose.error().push_description("failed to get monocular link pose");
 
+	// Convert from mm to m.
 	pose->translation() *= 0.001;
 
 	return pose;
 }
 
 Result<Eigen::Isometry3d> Ensenso::getStereoLink() const {
-	// convert from mm to m
+	// NOTE: Ensenso returns the pose of the base frame in the stereo frame.
 	Result<Eigen::Isometry3d> pose = toEigenIsometry(stereo_node[itmLink]);
 	if (!pose) return pose.error().push_description("failed to get stereo link pose");
 
+	// Convert from mm to m.
 	pose->translation() *= 0.001;
 
 	return pose;
+}
+
+Result<Eigen::Isometry3d> Ensenso::getMonoToStereo() const {
+	Result<Eigen::Isometry3d> stereo_to_mono = getMonocularLink();
+	if (!stereo_to_mono) return stereo_to_mono.error();
+	return stereo_to_mono->inverse();
+}
+
+Result<Eigen::Isometry3d> Ensenso::getStereoToBase() const {
+	Result<Eigen::Isometry3d> base_to_stereo = getStereoLink();
+	if (!base_to_stereo) return base_to_stereo.error();
+	return base_to_stereo->inverse();
+}
+
+Result<Eigen::Isometry3d> Ensenso::getStereoToMono() const {
+	return getMonocularLink();
+}
+
+Result<Eigen::Isometry3d> Ensenso::getBaseToStereo() const {
+	return getStereoLink();
 }
 
 Result<Ensenso::CaptureParams> Ensenso::getCaptureParameters(bool crop_to_roi) {
