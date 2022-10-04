@@ -472,12 +472,10 @@ Result<void> Ensenso::registerPointCloud(bool use_open_gl) {
 	Result<void> set_camera_param = setNx(command.parameters()[itmCamera], *serial_number);
 	if (!set_camera_param) return set_camera_param.error().push_description("failed to configure monocular camera serial number on compute disparity command");
 
-	// This has been disabled since at least 2016, but it has been causing strange shadowing effects.
+	// OpenGL has been disabled since at least 2016, but it has been causing strange shadowing effects.
 	// See https://github.com/fizyr/dr_ensenso/pull/22 for more information.
-	if (use_open_gl) {
-		Result<void> set_use_open_gl_param = setNx(root[itmDefaultParameters][itmRenderPointMap][itmUseOpenGL], false);
-		if (!set_use_open_gl_param) return set_use_open_gl_param.error().push_description("failed to configure use open gl on compute disparity command");
-	}
+	Result<void> set_use_open_gl_param = setNx(root[itmDefaultParameters][itmRenderPointMap][itmUseOpenGL], use_open_gl);
+	if (!set_use_open_gl_param) return set_use_open_gl_param.error().push_description("failed to configure use open gl on compute disparity command");
 
 	return executeNx(command);
 }
