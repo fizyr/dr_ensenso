@@ -1,5 +1,5 @@
 # Unreleased
-- [change][minor][pub] Add option for enabling OpenGL when registering point cloud with rectified image, which should improve its quality.
+- [add][minor][pub] Add option for enabling OpenGL when registering point cloud with rectified image, which should improve its quality.
 
 # Version 1.3.0 - 2021-12-16
 - [change][minor][pub] Clear calibration on empty frame names.
