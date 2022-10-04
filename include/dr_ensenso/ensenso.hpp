@@ -216,7 +216,7 @@ public:
 	Result<void> computePointCloud();
 
 	/// Register the point cloud to the RGB frame.
-	Result<void> registerPointCloud();
+	Result<void> registerPointCloud(bool use_open_gl = false);
 
 	/// Get the region of interest from the ensenso parameters.
 	Result<cv::Rect> getRoi();
