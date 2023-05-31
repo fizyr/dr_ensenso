@@ -56,6 +56,10 @@ public:
 		std::optional<std::size_t> monocular_height; // Height of image from monocular camera.
 	};
 
+	bool drop_tree_ = false;
+
+	std::string nxlib_log_path;
+
 protected:
 	/// The root EnsensoSDK node.
 	NxLibItem root;
@@ -369,6 +373,11 @@ public:
 
 	/// Gets capture parameters.
 	Result<CaptureParams> getCaptureParameters(bool crop_to_roi = false);
+
+	void enableNxLibLogging(std::string nxlib_path, std::string debug_level, int item_size, bool drop_tree);
+
+	/// Dumps tree parameteres.
+	void dumpParameters(std::string time_stamp);
 
 protected:
 
