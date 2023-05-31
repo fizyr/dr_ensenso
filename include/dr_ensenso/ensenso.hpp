@@ -56,9 +56,12 @@ public:
 		std::optional<std::size_t> monocular_height; // Height of image from monocular camera.
 	};
 
-	bool drop_tree_ = false;
+	/// The flag for dumping camera tree before each record request.
+	bool dump_tree = false;
 
-	std::string nxlib_log_path;
+	/// The path to the folder which contains nxlogs of during the connection.
+	/// If dump_tree is also set, this folder will also contain camera tree json files.
+	std::string connection_folder_path;
 
 protected:
 	/// The root EnsensoSDK node.
@@ -374,10 +377,10 @@ public:
 	/// Gets capture parameters.
 	Result<CaptureParams> getCaptureParameters(bool crop_to_roi = false);
 
-	void enableNxLibLogging(std::string nxlib_path, std::string debug_level, int item_size, bool drop_tree);
+	void enableNxLibLogging(std::string connection_folder_path, std::string debug_level, int item_size, bool dump_tree);
 
-	/// Dumps tree parameteres.
-	void dumpParameters(std::string time_stamp);
+	/// Dumps the camera tree to the cameras connection folder.
+	void dumpTree(std::string time_stamp);
 
 protected:
 

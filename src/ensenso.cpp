@@ -969,22 +969,22 @@ Result<Ensenso::CaptureParams> Ensenso::getCaptureParameters(bool crop_to_roi) {
 	return params;
 }
 
-void Ensenso::enableNxLibLogging(std::string nxlib_path, std::string debug_level, int item_size, bool drop_tree) {
+void Ensenso::enableNxLibLogging(std::string connection_folder_path, std::string debug_level, int item_size, bool dump_tree) {
 	    NxLibItem debugOut = root[itmDebug][itmFileOutput];
-        debugOut[itmFolderPath] = nxlib_path; // "/home/fizyr/nxlib-log-trial/2023-05-30/";
-        debugOut[itmMaxTotalSize] = item_size; // 100e6;
+        debugOut[itmFolderPath] = connection_folder_path;
+        debugOut[itmMaxTotalSize] = item_size;
         debugOut[itmEnabled] = true;
-        root[itmDebug][itmLevel] = debug_level; // "Trace";
-		drop_tree_ = drop_tree;
-		nxlib_log_path = nxlib_path;
+        root[itmDebug][itmLevel] = debug_level;
+		this->dump_tree = dump_tree;
+		this->connection_folder_path = connection_folder_path;
 }
 
-void Ensenso::dumpParameters(std::string time_stamp) {
+void Ensenso::dumpTree(std::string time_stamp) {
 	Result<std::string> serial_number = serialNumber();
-	//if (!serial_number) return serial_number.error().push_description("failed to determine stereo camera serial number");
+	if (!serial_number) log("failed to determine stereo camera serial number");
 
 	NxLibItem camera = root[itmCameras][itmBySerialNo][*serial_number];
-	std::string tree_file_name = nxlib_log_path + "/" + time_stamp + ".json";
+	std::string tree_file_name = connection_folder_path + "/" + time_stamp + ".json";
 	nxLibWriteDebugMessage("Camera Tree dumped to: " + tree_file_name);
 	std::ofstream file(tree_file_name);
 	if (file.is_open()) {
@@ -992,7 +992,7 @@ void Ensenso::dumpParameters(std::string time_stamp) {
 		file << camera.asJson(true);
 		file.close();
 	} else {
-		//return Error("failed to save json parameters: file can't be opened");
+		log(fmt::format("Failed to save camera tree as Json file: file can't be opened {}.", tree_file_name));
 	}
 }
 
