@@ -969,22 +969,31 @@ Result<Ensenso::CaptureParams> Ensenso::getCaptureParameters(bool crop_to_roi) {
 	return params;
 }
 
-void Ensenso::enableNxLibLogging(std::string connection_folder_path, std::string debug_level, int item_size, bool dump_tree) {
-	    NxLibItem debugOut = root[itmDebug][itmFileOutput];
-        debugOut[itmFolderPath] = connection_folder_path;
-        debugOut[itmMaxTotalSize] = item_size;
-        debugOut[itmEnabled] = true;
-        root[itmDebug][itmLevel] = debug_level;
-		this->dump_tree = dump_tree;
-		this->connection_folder_path = connection_folder_path;
+bool Ensenso::isDumpingTree() {
+	return dump_tree_;
+}
+
+void Ensenso::enableNxLibLogging(std::string connection_folder_path, std::string debug_level, int log_file_size, bool dump_tree) {
+	NxLibItem debugOut = root[itmDebug][itmFileOutput];
+	debugOut[itmFolderPath] = connection_folder_path;
+	debugOut[itmMaxTotalSize] = log_file_size;
+	debugOut[itmEnabled] = true;
+	root[itmDebug][itmLevel] = debug_level;
+	dump_tree_ = dump_tree;
+	connection_folder_path_ = connection_folder_path;
 }
 
 void Ensenso::dumpTree(std::string time_stamp) {
+	if (connection_folder_path_.empty()) {
+		log("failed to dump camera tree. NxLibLogging is not enabled.");
+		return;
+	}
+
 	Result<std::string> serial_number = serialNumber();
 	if (!serial_number) log("failed to determine stereo camera serial number");
 
 	NxLibItem camera = root[itmCameras][itmBySerialNo][*serial_number];
-	std::string tree_file_name = connection_folder_path + "/" + time_stamp + ".json";
+	std::string tree_file_name = connection_folder_path_ + "/" + time_stamp + ".json";
 	nxLibWriteDebugMessage("Camera Tree dumped to: " + tree_file_name);
 	std::ofstream file(tree_file_name);
 	if (file.is_open()) {
