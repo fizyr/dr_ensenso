@@ -383,7 +383,7 @@ public:
 	/// Initializes Ensenso Debug logging.
 	void enableDebugLogging(std::string const & log_path, std::string const & debug_level, int item_size, bool dump_tree);
 
-	/// Dump the camera tree to a timestamped json file in `connection_folder_path_`.
+	/// Dump the camera tree to a timestamped json file in `log_path_`.
 	Result<void> dumpTree(std::string const & time_stamp);
 
 protected:

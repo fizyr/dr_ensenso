@@ -1003,15 +1003,17 @@ Result<void> Ensenso::dumpTree(std::string const & time_stamp) {
 	NxLibItem camera = root[itmCameras][itmBySerialNo][*serial_number];
 	std::string tree_file_name = log_path_ + "/" + time_stamp + ".json";
 	std::ofstream file(tree_file_name);
-	if (file.is_open()) {
-		// Write entire camera tree as JSON into text file.
-		file << camera.asJson(true);
-		file.close();
-	} else {
+	if (!file.is_open()) {
 		return Error{fmt::format("failed to save camera tree to '{}'", tree_file_name)};
 	}
 
+	// Write entire camera tree as JSON into text file.
+	file << camera.asJson(true);
+	file.close();
+
+	// Mark camera tree dumping in nxlog file.
 	nxLibWriteDebugMessage(fmt::format("camera tree dumped to '{}'", tree_file_name));
+
 	return estd::in_place_valid;
 }
 
