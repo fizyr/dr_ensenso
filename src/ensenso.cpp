@@ -969,40 +969,49 @@ Result<Ensenso::CaptureParams> Ensenso::getCaptureParameters(bool crop_to_roi) {
 	return params;
 }
 
-bool Ensenso::canDumpTree() {
+bool Ensenso::isDumpTreeEnabled() {
 	return dump_tree_;
 }
 
-void Ensenso::enableDebugLogging(std::string const & connection_folder_path, std::string const & debug_level, int log_file_size, bool dump_tree) {
+void Ensenso::enableDebugLogging(
+	std::string const & log_path,
+	std::string const & debug_level,
+	int log_file_size,
+	bool dump_tree
+) {
 	NxLibItem debug_out = root[itmDebug][itmFileOutput];
-	debug_out[itmFolderPath] = connection_folder_path;
+
+	debug_out[itmFolderPath] = log_path;
 	debug_out[itmMaxTotalSize] = log_file_size;
 	debug_out[itmEnabled] = true;
 	root[itmDebug][itmLevel] = debug_level;
+
 	dump_tree_ = dump_tree;
-	connection_folder_path_ = connection_folder_path;
+	log_path_ = log_path;
 }
 
 Result<void> Ensenso::dumpTree(std::string const & time_stamp) {
-	if (connection_folder_path_.empty()) {
-		return Error{"Failed to dump camera tree: Debug logging is not enabled."};
+	if (log_path_.empty()) {
+		return Error{"failed to dump camera tree: log path is not set"};
 	}
 
 	Result<std::string> serial_number = serialNumber();
-	if (!serial_number) return Error{"Failed to dump camera tree: Serial number is not found."};
+	if (!serial_number) {
+		return Error{"failed to dump camera tree: serial number is not found"};
+	}
 
 	NxLibItem camera = root[itmCameras][itmBySerialNo][*serial_number];
-	std::string tree_file_name = connection_folder_path_ + "/" + time_stamp + ".json";
+	std::string tree_file_name = log_path_ + "/" + time_stamp + ".json";
 	std::ofstream file(tree_file_name);
 	if (file.is_open()) {
 		// Write entire camera tree as JSON into text file.
 		file << camera.asJson(true);
 		file.close();
 	} else {
-		return Error{fmt::format("Failed to save camera tree to '{}'.", tree_file_name)};
+		return Error{fmt::format("failed to save camera tree to '{}'", tree_file_name)};
 	}
 
-	nxLibWriteDebugMessage(fmt::format("Camera tree dumped to '{}'.", tree_file_name));
+	nxLibWriteDebugMessage(fmt::format("camera tree dumped to '{}'", tree_file_name));
 	return estd::in_place_valid;
 }
 

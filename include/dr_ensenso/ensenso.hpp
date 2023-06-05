@@ -72,12 +72,12 @@ protected:
 	/// Log function to use for verbose logging.
 	LogFunction logger_;
 
-	/// The flag for dumping camera tree before each record request.
+	/// The flag for dumping camera tree.
 	bool dump_tree_ = false;
 
-	/// The path to the folder which contains nxlogs during the connection.
-	/// If dump_tree is also set, this folder will also contain camera tree json files.
-	std::string connection_folder_path_;
+	/// The path to the folder which contains nxlogs.
+	/// If dump_tree_ is set to true, this folder will also contain the camera tree json files.
+	std::string log_path_;
 
 private:
 	/// Construct a ensenso object.
@@ -378,10 +378,10 @@ public:
 	Result<CaptureParams> getCaptureParameters(bool crop_to_roi = false);
 
 	/// Check whether or not `dump_tree_` is enabled.
-	bool canDumpTree();
+	bool isDumpTreeEnabled();
 
 	/// Initializes Ensenso Debug logging.
-	void enableDebugLogging(std::string const & connection_folder_path, std::string const & debug_level, int item_size, bool dump_tree);
+	void enableDebugLogging(std::string const & log_path, std::string const & debug_level, int item_size, bool dump_tree);
 
 	/// Dump the camera tree to a timestamped json file in `connection_folder_path_`.
 	Result<void> dumpTree(std::string const & time_stamp);
