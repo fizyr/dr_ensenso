@@ -969,40 +969,41 @@ Result<Ensenso::CaptureParams> Ensenso::getCaptureParameters(bool crop_to_roi) {
 	return params;
 }
 
-bool Ensenso::isDumpingTree() {
+bool Ensenso::canDumpTree() {
 	return dump_tree_;
 }
 
-void Ensenso::enableNxLibLogging(std::string connection_folder_path, std::string debug_level, int log_file_size, bool dump_tree) {
-	NxLibItem debugOut = root[itmDebug][itmFileOutput];
-	debugOut[itmFolderPath] = connection_folder_path;
-	debugOut[itmMaxTotalSize] = log_file_size;
-	debugOut[itmEnabled] = true;
+void Ensenso::enableDebugLogging(std::string const & connection_folder_path, std::string const & debug_level, int log_file_size, bool dump_tree) {
+	NxLibItem debug_out = root[itmDebug][itmFileOutput];
+	debug_out[itmFolderPath] = connection_folder_path;
+	debug_out[itmMaxTotalSize] = log_file_size;
+	debug_out[itmEnabled] = true;
 	root[itmDebug][itmLevel] = debug_level;
 	dump_tree_ = dump_tree;
 	connection_folder_path_ = connection_folder_path;
 }
 
-void Ensenso::dumpTree(std::string time_stamp) {
+Result<void> Ensenso::dumpTree(std::string const & time_stamp) {
 	if (connection_folder_path_.empty()) {
-		log("failed to dump camera tree. NxLibLogging is not enabled.");
-		return;
+		return Error{"Failed to dump camera tree: Debug logging is not enabled."};
 	}
 
 	Result<std::string> serial_number = serialNumber();
-	if (!serial_number) log("failed to determine stereo camera serial number");
+	if (!serial_number) return Error{"Failed to dump camera tree: Serial number is not found."};
 
 	NxLibItem camera = root[itmCameras][itmBySerialNo][*serial_number];
 	std::string tree_file_name = connection_folder_path_ + "/" + time_stamp + ".json";
-	nxLibWriteDebugMessage("Camera Tree dumped to: " + tree_file_name);
 	std::ofstream file(tree_file_name);
 	if (file.is_open()) {
 		// Write entire camera tree as JSON into text file.
 		file << camera.asJson(true);
 		file.close();
 	} else {
-		log(fmt::format("Failed to save camera tree as Json file: file can't be opened {}.", tree_file_name));
+		return Error{fmt::format("Failed to save camera tree to '{}'.", tree_file_name)};
 	}
+
+	nxLibWriteDebugMessage(fmt::format("Camera tree dumped to '{}'.", tree_file_name));
+	return estd::in_place_valid;
 }
 
 }

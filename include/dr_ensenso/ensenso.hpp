@@ -377,14 +377,14 @@ public:
 	/// Gets capture parameters.
 	Result<CaptureParams> getCaptureParameters(bool crop_to_roi = false);
 
-	/// Get dump_tree.
-	bool isDumpingTree();
+	/// Check whether or not `dump_tree_` is enabled.
+	bool canDumpTree();
 
 	/// Initializes Ensenso Debug logging.
-	void enableNxLibLogging(std::string connection_folder_path, std::string debug_level, int item_size, bool dump_tree);
+	void enableDebugLogging(std::string const & connection_folder_path, std::string const & debug_level, int item_size, bool dump_tree);
 
-	/// Dumps the camera tree to the cameras connection folder.
-	void dumpTree(std::string time_stamp);
+	/// Dump the camera tree to a timestamped json file in `connection_folder_path_`.
+	Result<void> dumpTree(std::string const & time_stamp);
 
 protected:
 
