@@ -14,6 +14,7 @@
 #include <optional>
 
 namespace dr {
+enum DebugLevel{OFF, INFO, DEBUG, TRACE};
 
 using LogFunction = std::function<void (std::string)>;
 
@@ -54,6 +55,32 @@ public:
 		std::size_t stereo_height;                   // Height of image from stereo camera.
 		std::optional<std::size_t> monocular_width;  // Width of image from monocular camera.
 		std::optional<std::size_t> monocular_height; // Height of image from monocular camera.
+	};
+
+	enum DebugLevel{OFF, INFO, DEBUG, TRACE};
+
+	static char const * toString(DebugLevel debug_level) {
+		switch(debug_level){
+			case OFF:
+				return "Off";
+			case INFO:
+				return "Info";
+			case DEBUG:
+				return "Debug";
+			case TRACE:
+				return "Trace";
+		}
+
+		return "unknown";
+	};
+
+	static Result<DebugLevel> fromString(std::string const & debug_level) {
+		if (debug_level == "Off") return OFF;
+		if (debug_level ==  "Info") return INFO;
+		if (debug_level == "Debug") return DEBUG;
+		if (debug_level == "Trace") return TRACE;
+	
+		return Error{"invalid DebugLevel: " + debug_level};
 	};
 
 private:
@@ -392,7 +419,7 @@ public:
 	bool isDumpTreeEnabled();
 
 	/// Initializes Ensenso Debug logging.
-	void enableDebugLogging(std::string const & log_path, std::string const & debug_level, int item_size, bool dump_tree);
+	void enableDebugLogging(std::string const & log_path, DebugLevel const & debug_level, int item_size, bool dump_tree);
 
 	/// Dump the camera tree to a timestamped json file in `log_path_`.
 	Result<void> dumpTree(std::string const & time_stamp);

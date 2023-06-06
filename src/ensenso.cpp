@@ -981,7 +981,7 @@ bool Ensenso::isDumpTreeEnabled() {
 
 void Ensenso::enableDebugLogging(
 	std::string const & base_folder,
-	std::string const & debug_level,
+	DebugLevel const & debug_level,
 	int log_file_size,
 	bool dump_tree
 ) {
@@ -1005,7 +1005,7 @@ void Ensenso::enableDebugLogging(
 	debug_out[itmFolderPath] = nxlog_sub_dir;
 	debug_out[itmMaxTotalSize] = log_file_size;
 	debug_out[itmEnabled] = true;
-	root[itmDebug][itmLevel] = debug_level;
+	root[itmDebug][itmLevel] = toString(debug_level);
 }
 
 Result<void> Ensenso::dumpTree(std::string const & time_stamp) {
