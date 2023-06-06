@@ -17,4 +17,5 @@
 	<depend>jsoncpp</depend>
 	<depend>fmt</depend>
 	<depend>estd</depend>
+	<depend>dr_util</depend>
 </package>

@@ -4,9 +4,11 @@
 #include "opencv.hpp"
 #include "pcl.hpp"
 
+#include <dr_util/timestamp.hpp>
 #include <stdexcept>
 #include <fstream>
 
+#include <boost/filesystem.hpp>
 #include <fmt/format.h>
 #include <json/json.h>
 
@@ -970,29 +972,45 @@ Result<Ensenso::CaptureParams> Ensenso::getCaptureParameters(bool crop_to_roi) {
 }
 
 bool Ensenso::isDumpTreeEnabled() {
-	return dump_tree_;
+	if (debug_log_.has_value()) {
+		return debug_log_->dump_tree;
+	} else {
+		return false;
+	}
 }
 
 void Ensenso::enableDebugLogging(
-	std::string const & log_path,
+	std::string const & base_folder,
 	std::string const & debug_level,
 	int log_file_size,
 	bool dump_tree
 ) {
+	namespace fs = boost::filesystem;
+	// Set debug log parameters.
+	auto log_path = (fs::path(base_folder) / dr::getTimeString()).native();
+	auto nxlog_sub_dir = (fs::path(log_path) / "logs").native();
+	auto trees_sub_dir = (fs::path(log_path) / "trees").native();
+	debug_log_ = DebugLogParams{log_path, nxlog_sub_dir, trees_sub_dir, dump_tree};
+
+	// Create sub directory for nxlogs.
+	fs::create_directories(nxlog_sub_dir);
+
+	if (dump_tree) {
+		// Create sub directory for camera trees.
+		fs::create_directories(trees_sub_dir);
+	}
+
 	NxLibItem debug_out = root[itmDebug][itmFileOutput];
 
-	debug_out[itmFolderPath] = log_path;
+	debug_out[itmFolderPath] = nxlog_sub_dir;
 	debug_out[itmMaxTotalSize] = log_file_size;
 	debug_out[itmEnabled] = true;
 	root[itmDebug][itmLevel] = debug_level;
-
-	dump_tree_ = dump_tree;
-	log_path_ = log_path;
 }
 
 Result<void> Ensenso::dumpTree(std::string const & time_stamp) {
-	if (log_path_.empty()) {
-		return Error{"failed to dump camera tree: log path is not set"};
+	if (!debug_log_.has_value()) {
+		return Error{"failed to dump camera tree: debug log is not enabled"};
 	}
 
 	Result<std::string> serial_number = serialNumber();
@@ -1000,18 +1018,19 @@ Result<void> Ensenso::dumpTree(std::string const & time_stamp) {
 		return Error{"failed to dump camera tree: serial number is not found"};
 	}
 
-	NxLibItem camera = root[itmCameras][itmBySerialNo][*serial_number];
-	std::string tree_file_name = log_path_ + "/" + time_stamp + ".json";
+	// Create JSON file.
+	std::string tree_file_name = debug_log_->trees_sub_dir + "/" + time_stamp + ".json";
 	std::ofstream file(tree_file_name);
 	if (!file.is_open()) {
 		return Error{fmt::format("failed to save camera tree to '{}'", tree_file_name)};
 	}
 
 	// Write entire camera tree as JSON into text file.
+	NxLibItem camera = root[itmCameras][itmBySerialNo][*serial_number];
 	file << camera.asJson(true);
 	file.close();
 
-	// Mark camera tree dumping in nxlog file.
+	// Add the event of camera tree dumping to the nxlog file.
 	nxLibWriteDebugMessage(fmt::format("camera tree dumped to '{}'", tree_file_name));
 
 	return estd::in_place_valid;

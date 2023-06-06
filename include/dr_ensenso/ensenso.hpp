@@ -56,6 +56,21 @@ public:
 		std::optional<std::size_t> monocular_height; // Height of image from monocular camera.
 	};
 
+private:
+	struct DebugLogParams {
+		/// The path to the folder which contains debug logs.
+		std::string log_path;
+
+		/// The path to the sub folder which contains nxlogs.
+		std::string nxlog_sub_dir;
+
+		/// The path to the sub folder which contains camera trees.
+		std::string trees_sub_dir;
+
+		/// The flag for dumping camera tree.
+		bool dump_tree = false;
+	};
+
 protected:
 	/// The root EnsensoSDK node.
 	NxLibItem root;
@@ -72,12 +87,8 @@ protected:
 	/// Log function to use for verbose logging.
 	LogFunction logger_;
 
-	/// The flag for dumping camera tree.
-	bool dump_tree_ = false;
-
-	/// The path to the folder which contains nxlogs.
-	/// If dump_tree_ is set to true, this folder will also contain the camera tree json files.
-	std::string log_path_;
+	/// Debug logging parameters.
+	std::optional<DebugLogParams> debug_log_;
 
 private:
 	/// Construct a ensenso object.
