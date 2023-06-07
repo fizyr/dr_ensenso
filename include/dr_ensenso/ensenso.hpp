@@ -58,13 +58,13 @@ public:
 
 	/// The debug levels for debug logging.
 	enum DebugLevel{
-		///  Disables profiling outputs.
+		/// Disables profiling outputs.
 		OFF,
 
 		/// Outputs only basic information like command executions. Can be used without measurable influence on the application performance.
 		INFO,
 
-		///  Outputs more information about sub steps of commands or helper threads.
+		/// Outputs more information about sub steps of commands or helper threads.
 		DEBUG,
 
 		/// Full logging including all API calls and parameter values. We recommend to use this level only for debugging purposes.
@@ -88,7 +88,7 @@ public:
 
 	static Result<DebugLevel> fromString(std::string const & debug_level) {
 		if (debug_level == "Off") return OFF;
-		if (debug_level ==  "Info") return INFO;
+		if (debug_level == "Info") return INFO;
 		if (debug_level == "Debug") return DEBUG;
 		if (debug_level == "Trace") return TRACE;
 	
