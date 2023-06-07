@@ -10,12 +10,13 @@
 
 	<buildtool_depend>catkin</buildtool_depend>
 
+	<depend>dr_util</depend>
 	<depend>eigen</depend>
 	<depend>ensenso-sdk</depend>
+	<depend>estd</depend>
+	<depend>fmt</depend>
 	<depend>libopencv-dev</depend>
 	<depend>libpcl-all-dev</depend>
 	<depend>jsoncpp</depend>
-	<depend>fmt</depend>
-	<depend>estd</depend>
-	<depend>dr_util</depend>
+
 </package>

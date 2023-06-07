@@ -14,7 +14,6 @@
 #include <optional>
 
 namespace dr {
-enum DebugLevel{OFF, INFO, DEBUG, TRACE};
 
 using LogFunction = std::function<void (std::string)>;
 
@@ -57,7 +56,20 @@ public:
 		std::optional<std::size_t> monocular_height; // Height of image from monocular camera.
 	};
 
-	enum DebugLevel{OFF, INFO, DEBUG, TRACE};
+	/// The debug levels for debug logging.
+	enum DebugLevel{
+		///  Disables profiling outputs.
+		OFF,
+
+		/// Outputs only basic information like command executions. Can be used without measurable influence on the application performance.
+		INFO,
+
+		///  Outputs more information about sub steps of commands or helper threads.
+		DEBUG,
+
+		/// Full logging including all API calls and parameter values. We recommend to use this level only for debugging purposes.
+		TRACE
+	};
 
 	static char const * toString(DebugLevel debug_level) {
 		switch(debug_level){
