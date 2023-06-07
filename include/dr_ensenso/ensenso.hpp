@@ -56,6 +56,60 @@ public:
 		std::optional<std::size_t> monocular_height; // Height of image from monocular camera.
 	};
 
+	/// The debug levels for debug logging.
+	enum DebugLevel{
+		/// Disables profiling outputs.
+		OFF,
+
+		/// Outputs only basic information like command executions. Can be used without measurable influence on the application performance.
+		INFO,
+
+		/// Outputs more information about sub steps of commands or helper threads.
+		DEBUG,
+
+		/// Full logging including all API calls and parameter values. We recommend to use this level only for debugging purposes.
+		TRACE
+	};
+
+	static char const * toString(DebugLevel debug_level) {
+		switch(debug_level){
+			case OFF:
+				return "Off";
+			case INFO:
+				return "Info";
+			case DEBUG:
+				return "Debug";
+			case TRACE:
+				return "Trace";
+		}
+
+		return "unknown";
+	};
+
+	static Result<DebugLevel> fromString(std::string const & debug_level) {
+		if (debug_level == "Off") return OFF;
+		if (debug_level == "Info") return INFO;
+		if (debug_level == "Debug") return DEBUG;
+		if (debug_level == "Trace") return TRACE;
+	
+		return Error{"invalid DebugLevel: " + debug_level};
+	};
+
+private:
+	struct DebugLogParams {
+		/// The path to the folder which contains debug logs.
+		std::string log_path;
+
+		/// The path to the sub folder which contains nxlogs.
+		std::string nxlog_sub_dir;
+
+		/// The path to the sub folder which contains camera trees.
+		std::string trees_sub_dir;
+
+		/// The flag for dumping camera tree.
+		bool dump_tree = false;
+	};
+
 protected:
 	/// The root EnsensoSDK node.
 	NxLibItem root;
@@ -71,6 +125,9 @@ protected:
 
 	/// Log function to use for verbose logging.
 	LogFunction logger_;
+
+	/// Debug logging parameters.
+	std::optional<DebugLogParams> debug_log_;
 
 private:
 	/// Construct a ensenso object.
@@ -369,6 +426,15 @@ public:
 
 	/// Gets capture parameters.
 	Result<CaptureParams> getCaptureParameters(bool crop_to_roi = false);
+
+	/// Check whether or not `dump_tree_` is enabled.
+	bool isDumpTreeEnabled();
+
+	/// Initializes Ensenso Debug logging.
+	void enableDebugLogging(std::string const & log_path, DebugLevel const & debug_level, int item_size, bool dump_tree);
+
+	/// Dump the camera tree to a timestamped json file in `log_path_`.
+	Result<void> dumpTree(std::string const & time_stamp);
 
 protected:
 
